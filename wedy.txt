@@ -1,3 +1,7 @@
+test
+
+
+
 ﻿strumień video leci przez mjpg-streamer bo mało obciąża system.
 wget http://lilnetwork.com/download/raspberrypi/mjpg-streamer.tar.gz
 sudo apt-get install libjpeg8-dev
