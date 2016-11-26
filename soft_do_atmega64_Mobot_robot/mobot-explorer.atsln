@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "mobot-explorer", "mobot-explorer.cproj", "{8436C770-1B2B-4949-B86B-4F839A8B6B3F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8436C770-1B2B-4949-B86B-4F839A8B6B3F}.Debug|AVR.ActiveCfg = Debug|AVR
+		{8436C770-1B2B-4949-B86B-4F839A8B6B3F}.Debug|AVR.Build.0 = Debug|AVR
+		{8436C770-1B2B-4949-B86B-4F839A8B6B3F}.Release|AVR.ActiveCfg = Release|AVR
+		{8436C770-1B2B-4949-B86B-4F839A8B6B3F}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
