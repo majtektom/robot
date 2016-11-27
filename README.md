@@ -36,7 +36,9 @@ sudo raspi-config
    ustawiamy polski, polskie kodowanie, włączmy ssh, uart, i2c, spi, poszerzamy partycję
 
 ustawiamy połączenie wifi. Ja ma w ruterze ustawione stałe pi dla raspberry pi
+```
 sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+```
 i otwartym pliku ustawiamy zamieniająć na swoją sieć:
 ```
 	network={
@@ -45,7 +47,9 @@ i otwartym pliku ustawiamy zamieniająć na swoją sieć:
 	}
 ```
 resetujemy system. Od tej chwili można łączyć się przez ssh np. putty
-  sudo reboot
+``` 
+ sudo reboot
+```
    
    
 aktualizujemy system
@@ -69,7 +73,10 @@ uprawnienia do kożystania z i2c i uart
   sudo adduser pi i2c
 ```
 
-tworzymy ramdyski dla tymczasowych danych. Oszczędzamy kartę sd edytując plik sudo nano /etc/fstab
+tworzymy ramdyski dla tymczasowych danych. Oszczędzamy kartę sd edytując plik 
+```
+sudo nano /etc/fstab
+```
 dopisujemy:
 ```
   tmpfs /tmp tmpfs defaults,noatime,nosuid,size=16M 0 0
@@ -82,10 +89,17 @@ dopisujemy:
 uruchomienie kamery
 ------------------
 strumień video leci przez mjpg-streamer bo mało obciąża system. pobieramy soft
+```
 git clone https://github.com/jacksonliam/mjpg-streamer.git
+```
 albo
+```
 wget http://lilnetwork.com/download/raspberrypi/mjpg-streamer.tar.gz
-kompilujemy nasz pakiet wystarczy samo: make
+```
+kompilujemy nasz pakiet wystarczy samo: 
+```
+make
+```
 test:
 ```
       ./mjpg-streamer -o "./output_http.so -c pi:123 -p 8090 -w ./www" \
