@@ -89,7 +89,8 @@ jak nie ma błędów to pod adresem localhost:8090 powinniśmy mieć obraz z kam
 Jak działa to ctrl+c (ubijamy proces)
 tworzymy deamona aby uruchamiało się przy starcie
 kopiujemy jako root plik kamera.sh do /etc/init.d/ (uwaga dostosuj ścieżki w pliku do swoich wymagań) 
- ``` sudo mv kamera.sh /etc/init.d
+ ``` 
+ sudo mv kamera.sh /etc/init.d
  ```
 zmieniamy uprawnienia:
 ```
