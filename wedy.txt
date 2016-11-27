@@ -1,7 +1,8 @@
 ﻿strumień video leci przez mjpg-streamer bo mało obciąża system.
+https://github.com/jacksonliam/mjpg-streamer.git ma odsługę opencv w wersji 3.1
 wget http://lilnetwork.com/download/raspberrypi/mjpg-streamer.tar.gz
-sudo apt-get install libjpeg8-dev
-sudo apt-get install imagemagick
+sudo apt-get install libv4l-dev libjpeg8-dev imagemagick build-essential cmake subversion
+http://petrkout.com/electronics/low-latency-0-4-s-video-streaming-from-raspberry-pi-mjpeg-streamer-opencv/
 
 puszenie stromienia na porcie 8090. podgląd np http://192.168.1.10:8090
 ./mjpg_streamer -i "./input_uvc.so -y" -o "./output_http.so -p 8090 -w ./www" &
@@ -16,7 +17,11 @@ sudo chmod a+rw /dev/ttyAMA0
 sudo chmod a+rw /dev/i2c-1
 sudo adduser pi i2c
 
-
+tworzymy ramdyski dla tymczasowych danych. oszczędzamy kartę sd
+# tmpfs /tmp tmpfs defaults,noatime,nosuid,size=64M 0 0
+tmpfs /var/tmp tmpfs defaults,noatime,nosuid,size=64M 0 0
+# tmpfs /var/run tmpfs defaults,noatime,nosuid,mode=0777=2M 0 0
+tmpfs /var/log tmpfs defaults,noatime,nosuid,mode=0777,size=4M 0 0
 
 
 uruchomienie usługi
@@ -80,7 +85,8 @@ nano nodejs.sh - wklejamy do pliku:
 NODE=/opt/node/bin/node
 SERVER_JS_FILE=/home/pi/app/server.js
 USER=pi
-OUT=/home/pi/nodejs.log
+OUT=/dev/null 		
+#OUT=/home/pi/nodejs.log
 
 case "$1" in
 
