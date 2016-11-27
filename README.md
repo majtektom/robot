@@ -123,23 +123,27 @@ czy działa
 
 instalacja node.js
 -----------------
+```
   sudo mkdir /opt/node	
   wget http://nodejs.org/dist/latest-v7.x/node-v7.1.0-linux-armv7l.tar.gz
   tar xvzf node-v0.11.2-linux-arm-pi.tar.gz
   sudo cp -r node-v0.11.2-linux-arm-pi/* /opt/node	
   rm -r node-v0.11.2-linux-arm-pi
   sudo nano /etc/profile 
-     edytujemy przed export PATH:
+```
+  edytujemy przed export PATH:
     ```
 	NODE_JS_HOME="/opt/node"
     PATH="$PATH:$NODE_JS_HOME/bin"
 	```
-
+```
   sudo reboot
+```
 tworzymy deamona do uruchumienia serwera na node. Tak samo jak kamery tylko kopiujemy skrypt nodejs.sh (uwaga dostosuj ścieżki w pliku do swoich wymagań)  
 
 uruchamiamy watchdoga
 ---------------------
+```
 sudo modprobe bcm3510
 sudo nano /etc/modules - na końcu dopisujemy bcm3510
 sudo apt-get install watchdog chkconfig
@@ -150,13 +154,20 @@ sudo nano /etc/default/watchdog - zmieniamy watchdog_module=„none” na watchd
 sudo nano /etc/watchdog.conf zmieniamy usuwając # dla 
 	watchdog-device = /dev/watchdog	
 	max-load-1 = 24
-reboot
+sudo reboot
+```
 sprawdzanie
+```
 sudo /etc/init.d/watchdog status
+```
 jak leży to podnosimy 
+```
 sudo /etc/init.d/watchdog start
-fork bomba
+```
+testujemy fork bombą
+```
 :(){ :|:& };:
+```
 po paru sekundach powinien nastąpić reset systemu
 
 
@@ -165,6 +176,7 @@ instalacja opencv
 używam wersji 2.4.13 bo wersja 3.1 ponoć nie działa z nodejs
 pobieramy ze strony
 http://opencv.org/downloads.html
+```
    tar xvzf opencv-2.4.13.tar.gz
    sudo apt-get install libgtk2.0 libgtk2.0-dev zlib1g-dev libpng-dev libjpeg-dev libtiff-dev  swig
    sudo apt-get install build-essential cmake pkg-config
@@ -181,13 +193,15 @@ make trwa długo to duży pakiet
   sudo make install
   sudo ldconfig
   make clean
+```
 
 serwer www
 ---------
 działają dwa jeden dla kamery na porcie 8090 i drugi szata graficzna na porcie 8080 można sobie ustawić 80 na drugi, nie trzeba będzie podawać portu w adresie www.
-
-trzeba doinstalować zależności aby serwer www działał w tym celu w katalogu gdzie jest plik package.json  wywołujemy:
+Trzeba doinstalować zależności aby serwer www działał w tym celu w katalogu gdzie jest plik package.json  wywołujemy:
+```
 npm install
+```
 
 
   
