@@ -4,8 +4,8 @@ raspberry pi, node, robotic, atmega
 Wymagania
 =========
 
-<hardware>
-----------
+hardware
+========
 * Raspberry pi3
  
 * Kamera nie koniecznie dedykowana na rapberrypi (ja mam jakąć starą kamerę wifi gdzie moduł wifi się spalił ale sama kamera przerzyła ja się okazało była na usb więc dorobiłem kabelek i działa od razu w raspberry). Do tego ma doświetlanie w podczerwieni więc w nocy też widać.
@@ -21,15 +21,15 @@ platforma może być dowolna i własna elektronika, ale wtedy trzeba sobie zmody
 
 * Akumulator. Mam pakiet li-po 12V 2200mah 
  
-<software>
----------
+software
+=======
 Program na atmega64 do platformy jezdnej.
-========================================
+------------------------------------------
 Aktualnie steruje tylko silnikami, mnierzy napięcie i prady silników i serw. Komunikuje się z raspberry po i2c.
 
 
 Raspberry pi3 napędza RASPBIAN JESSIE LITE wersja minimalna bez serwera X
-===========================================================================
+-------------------------------------------------------------------------
 konfiguracja raspbiana (coś mogłem pominąć piszę z pamięci):
 -----------------------------------------------------------
 sudo raspi-config
