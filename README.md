@@ -2,8 +2,10 @@
 raspberry pi, node, robotic, atmega
 
 Wymagania
+=========
 
 <hardware>
+----------
 * Raspberry pi3
  
 * Kamera nie koniecznie dedykowana na rapberrypi (ja mam jakąć starą kamerę wifi gdzie moduł wifi się spalił ale sama kamera przerzyła ja się okazało była na usb więc dorobiłem kabelek i działa od razu w raspberry). Do tego ma doświetlanie w podczerwieni więc w nocy też widać.
@@ -20,12 +22,16 @@ platforma może być dowolna i własna elektronika, ale wtedy trzeba sobie zmody
 * Akumulator. Mam pakiet li-po 12V 2200mah 
  
 <software>
-==============================================================================
-Program na atmega64 do platformy jezdnej. Aktualnie steruje tylko silnikami, mnierzy napięcie i prady silników i serw. Komunikuje się z raspberry po i2c.
+---------
+Program na atmega64 do platformy jezdnej.
+========================================
+Aktualnie steruje tylko silnikami, mnierzy napięcie i prady silników i serw. Komunikuje się z raspberry po i2c.
 
-===========================================================================
+
 Raspberry pi3 napędza RASPBIAN JESSIE LITE wersja minimalna bez serwera X
+===========================================================================
 konfiguracja raspbiana (coś mogłem pominąć piszę z pamięci):
+-----------------------------------------------------------
 sudo raspi-config
    ustawiamy polski, polskie kodowanie, włączmy ssh, uart, i2c, spi, poszerzamy partycję
 
@@ -72,8 +78,9 @@ dopisujemy:
   tmpfs /var/log tmpfs defaults,noatime,nosuid,mode=0777,size=16M 0 0
 ```
 
-================================================================================
+
 uruchomienie kamery
+------------------
 strumień video leci przez mjpg-streamer bo mało obciąża system. pobieramy soft
 git clone https://github.com/jacksonliam/mjpg-streamer.git
 albo
@@ -114,8 +121,8 @@ czy działa
   sudo systemctl status kamera
 ```
 
-============================================================================
 instalacja node.js
+-----------------
   sudo mkdir /opt/node	
   wget http://nodejs.org/dist/latest-v7.x/node-v7.1.0-linux-armv7l.tar.gz
   tar xvzf node-v0.11.2-linux-arm-pi.tar.gz
@@ -130,9 +137,9 @@ instalacja node.js
 
   sudo reboot
 tworzymy deamona do uruchumienia serwera na node. Tak samo jak kamery tylko kopiujemy skrypt nodejs.sh (uwaga dostosuj ścieżki w pliku do swoich wymagań)  
-=========================================================================
-uruchamiamy watchdoga
 
+uruchamiamy watchdoga
+---------------------
 sudo modprobe bcm3510
 sudo nano /etc/modules - na końcu dopisujemy bcm3510
 sudo apt-get install watchdog chkconfig
@@ -152,8 +159,9 @@ fork bomba
 :(){ :|:& };:
 po paru sekundach powinien nastąpić reset systemu
 
---------------------------------------------------------------------------
+
 instalacja opencv
+----------------
 używam wersji 2.4.13 bo wersja 3.1 ponoć nie działa z nodejs
 pobieramy ze strony
 http://opencv.org/downloads.html
@@ -173,8 +181,9 @@ make trwa długo to duży pakiet
   sudo make install
   sudo ldconfig
   make clean
----------------------------------------------------------------------------
+
 serwer www
+---------
 działają dwa jeden dla kamery na porcie 8090 i drugi szata graficzna na porcie 8080 można sobie ustawić 80 na drugi, nie trzeba będzie podawać portu w adresie www.
 
 trzeba doinstalować zależności aby serwer www działał w tym celu w katalogu gdzie jest plik package.json  wywołujemy:
