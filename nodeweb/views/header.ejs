@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>WebIOPi |sterowanie ramieniem wysięgnika</title>
+	<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+	<script type="text/javascript" src="/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="js/hammer.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="js/socket.js"></script>
+	
+	<link href="./css/bootstrap.min.css" rel="stylesheet">
+	<link href="./css/main.css" rel="stylesheet">
+	<link href="./css/dotyk.css" rel="stylesheet">
+
+	<style type="text/css">
+		body{
+			background-color: #116611;
+		}
+	</style>
+<% if (user) { %>
+<script>
+
+	
+
+
+</script>
+
+<% } %>	
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+	<div class="container">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+				<span class="sr-only">sterowanie</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="/"><span class="glyphicon glyphicon-home" aria-hidden="true"></span> Sterowanie robotem</a>
+			<% if (user) { %>
+			<input type="button" class="btn btn-success" id="restart" value="restart" />
+			<span class="icon-bar">Witaj <%= user.username %>. <a href="/profile">Twój profil</a>. <a href="/logout"  class="btn btn-success">Wyloguj</a></span>
+			<span class="icon-bar" id="ping">Ping</span>
+			<% } %>	
+		</div>
+		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+			<ul class="nav navbar-nav navbar-right">
+				<li <% if ( url=="/"){ %>class="active" <% } %>><a href="/"><i class="fa fa-area-chart"> Sterowanie</i></a></li>
+				<li <% if ( url=="/foty"){ %>class="active" <% } %>><a href="/foty"><i class="fa fa-lightbulb-o">Fotki</i></a></li>
+			</ul>
+		</div><!-- /.navbar-collapse -->
+	</div><!-- /.container-fluid -->
+</nav>
+
+<div class="container">
+  <div class="row">

@@ -1,343 +1,122 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-	<title>WebIOPi |sterowanie ramieniem wysięgnika</title>
-	<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-	<script type="text/javascript" src="/js/bootstrap.min.js"></script>
-	<script type="text/javascript" src="js/hammer.js"></script>
-	<script src="/socket.io/socket.io.js"></script>
-    
-
-	<link href="./css/bootstrap.min.css" rel="stylesheet">
-	<link href="./css/main.css" rel="stylesheet">
-	<link href="./css/dotyk.css" rel="stylesheet">
-
-	<style type="text/css">
-		body{
-			background-color: #116611;
-		}
-
-	</style>
-<% if (user) { %>
-<script>
-
-//var socket = io();
-var socket = io.connect("http://"+location.hostname+":8080");
-var time1=0;
-var time2=0;
-
-socket.on('restart', function(msg){
-		$('#ping').text(msg);
-	}); 
-socket.on('temperatura1', function(msg){
-		$('#pTemp1').text("Wewnątrz: "+ msg + "°C");
-	});
-socket.on('temperatura2', function(msg){
-		$("#pTemp2").text("Zewnątrz: "+ msg + "°C");
-		var d = new Date();
-		time2 = d.getTime();
-		$("#ping").text("Ping "+(time2-time1)+"ms");
-	});
-socket.on('napiecie_i_prady', function(msg){
-		var tab= msg.split(";");
-		$("#silniki_prady").text("Silnik lewy: "+tab[0]+"A Silnik prawy: "+ tab[1]+"A");
-		$("#napiecie").text(tab[2]+"V");
-
-	});
-socket.on('silniki', function(msg){
-		var wynik = $('#silniki_test');
-		var tab= wynik.text().split(";");
-		wynik.text(tab[0]+'; '+msg);
-	});
-socket.on('serwa', function(msg){
-		$("#test").text(msg);
-		var tab= msg.split(";");
-		if(tab[3]!=0 & tab[4]!=0 & tab[5]!=0 & tab[6]!=0 & tab[7]!=0 ){
-				$('#barkLP').val(tab[3]/4);
-				$('#barkGD').val(tab[4]/4); 
-				$('#lokiec').val(tab[5]/4); 
-				$('#nadgarstek').val(tab[6]/4); 
-				$('#szczeki').val(tab[7]/4); 
-		}
-		
-	});
- //wywoływana cyklicznie
-function updateUI() {
-		socket.emit('gettemperature', 't1,t2');
-		socket.emit('getprady', 'A;A;V');
-		var d = new Date();
-		time1 = d.getTime();
-}
-
-//$(document).ready(function(){
-$(function(){
-	setInterval(updateUI,2000);
-	$("#streamimage").attr("src","http://"+location.hostname+":8090/?action=stream");
-
-	$('#barkLP,#barkGD,#lokiec,#nadgarstek,#szczeki').change( function() { 	
-		var data= new Int16Array(8);
-		//0x9F, ile serw, nr serwa,bajt1 danych, bajt2 danych
-		data[0]=159;	data[1]=5; data[2]=0; 
-		data[3]=$('#barkLP').val()*4;
-		data[4]=$('#barkGD').val()*4; 
-		data[5]=$('#lokiec').val()*4; 
-		data[6]=$('#nadgarstek').val()*4; 
-		data[7]=$('#szczeki').val()*4; 
-		var tt=data.join(";");
-		socket.emit('serwa', tt);
-	});
-		
-	$("#stopserwa").click(function(){
-		var data= new Int16Array(8);
-		data[0]=159;	data[1]=5; data[2]=0; 
-		data[3]=0;		data[4]=0;	data[5]=0;
-		data[6]=0;		data[7]=0;  
-		var tt=data.join(";");
-		socket.emit('serwa', tt);
-	});
-
-	$("#zaparkuj_serwa").click(function(){
-		var data= new Int16Array(8);
-		data[0]=159;	data[1]=5; 		data[2]=0; 
-		data[3]=1740*4;	data[4]=850*4;	data[5]=950*4;
-		data[6]=1680*4;	data[7]=900*4;  
-		var tt=data.join(";");
-		socket.emit('serwa', tt);
-		$('#barkLP').val(1740);
-		$('#barkGD').val(850); 
-		$('#lokiec').val(950); 
-		$('#nadgarstek').val(1681); 
-		$('#szczeki').val(900); 
-	});
+<%- include('header') %>
 
 
-	$("#stopsilniki").click(function(){
-		var data= new Int16Array(4);
-		data[0]=0x10;	data[1]=0; data[2]=0;data[3]=0;
-		var tt=data.join(";");
-		socket.emit('silniki', tt); 
-	});
-	
-
-	$("#restart").click(function(){
-		var data= new Int16Array(2);
-		data[0]=0x20;	data[1]=0;;
-		var tt=data.join(";");
-		//webiopi().callMacro("restart",tt,updatePing);
-		socket.emit('restart', tt); 
-	});
-
-	// set rotation angle phi and toggle rotate class
-	$('#rotate').click(function() {
-		phi = (phi + 90) % 360;
-		setXformClass();
-		if (phi % 180) {
-			$('.xform-p').addClass('rotated');
-		} else {
-			$('.xform-p').removeClass('rotated');
-		}
-	});
-	// toggle mirror class component
-	$('#mirror').click(function() {
-		mirrored = ! mirrored;
-		setXformClass();
-	});
-	// toggle flip class component
-	$('#flip').click(function() {
-		flipped = ! flipped;
-		setXformClass();
-	});
-
-	
-});
-	
-//kamera
-var phi = 0, flipped = 0, mirrored = 0;
-function setXformClass () {
-	$('.xform').each(function(idx,el) {
-		el.className = "xform x" +(flipped ? "-flipped":"") + (mirrored ? "-mirrored" : "") + "-rotated-" + phi;
-	});
-}
-
-</script>
-
-<% } %>	
-</head>
-<body>
-
-<nav class="navbar navbar-default">
-	<div class="container">
-		<div class="navbar-header">
-			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-				<span class="sr-only">sterowanie</span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-				<span class="icon-bar"></span>
-			</button>
-			<a class="navbar-brand" href="index.html"><span class="glyphicon glyphicon-home" aria-hidden="true"></span> Sterowanie robotem</a>
-			<% if (user) { %>
-			<input type="button" class="btn btn-success" id="restart" value="restart" />
-			<span class="icon-bar">Witaj <%= user.username %>. <a href="/profile">Twój profil</a>. <a href="/logout"  class="btn btn-success">Wyloguj</a></span>
-			<span class="icon-bar" id="ping">Ping</span>
-			<% } %>	
-		</div>
-		<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-			<ul class="nav navbar-nav navbar-right">
-				<li class="active"><a href="index.html"><i class="fa fa-area-chart"></i></i> Sterowanie</a></li>
-				<li><a href="11.html"><i class="fa fa-lightbulb-o"></i> 11</a></li>
-				<li><a href="22.html"><i class="fa fa-cogs"></i> 22</a></li>
-				<li><a href="33.html"><i class="fa fa-cog"></i> 33</a></li>
-			</ul>
-		</div><!-- /.navbar-collapse -->
-	</div><!-- /.container-fluid -->
-</nav>
-
-<div class="container">
-  <div class="row">
 <% if (!user) { %>
-<!-- KAFEL logowanie===================================================================== -->
-	<div class="col-sm-12 col-md-4">
-		<div class="thumbnail text-center green-thumb">
-			<div class="caption green-caption">
-				<form action="/login" method="post">
-					<div>
-					<label>Użytkownik:</label>
-					<input type="text" class="form-control" name="username"/><br/>
-					</div>
-					<div>
-					<label> Hasło: </label>
-					<input type="password" class="form-control" name="password"/>
-					</div>
-					<div>
-					<input type="submit" class="btn btn-success" value="Loguj"/>
-					</div>
-				</form>
-			</div>
+<!-- KAFEL logowanie==================================== -->
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption">
+			<form action="/login" method="post">
+				<div>
+				<label>Użytkownik:</label>
+				<input type="text" class="form-control" name="username"/><br/>
+				</div>
+				<div>
+				<label> Hasło: </label>
+				<input type="password" class="form-control" name="password"/>
+				</div>
+				<div>
+				<input type="submit" class="btn btn-success" value="Loguj"/>
+				</div>
+			</form>
 		</div>
 	</div>
+</div>
 
 <% } else { %>
 
-	<!-- KAFEL serwa ===================================================================== -->
-	<div class="col-sm-12 col-md-4">
-		<div class="thumbnail text-center green-thumb">
-			<div class="caption green-caption">
-				<h3>Ramie robota</h3>
-				<p>Bark lewo/prawo. </p>
-				<div class="form-group">
-					<input class="thumb-slider" id="barkLP" type="range" name="barkLP" min="600" max="2400" value="1740"> 
-				</div>
-				<p>Bark góra/dół.</p>
-				<div class="form-group">
-					<input class="thumb-slider" id="barkGD" type="range" name="barkGD" min="800" max="2000" value="850"> 
-				</div>
-				<p>Łokieć.</p>
-				<div class="form-group">
-					<input class="thumb-slider" id="lokiec" type="range" name="lokiec" min="900" max="2450" value="950"> 
-				</div>
-				<p>Nadgarstek.</p>
-				<div class="form-group">
-					<input class="thumb-slider" id="nadgarstek" type="range" name="nadgarstek" min="400" max="2400" value="1680"> 
-				</div>
-				<p>Szczęki.</p>
-				<div class="form-group">
-					<input class="thumb-slider" id="szczeki" type="range" name="szczeki" min="820" max="1800" value="900"> 
-				</div>
+<!-- KAFEL serwa ===================================================================== -->
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption">
+			<h3>Ramie robota</h3>
+			<p>Bark lewo/prawo. </p>
+			<div class="form-group">
+				<input class="thumb-slider" id="barkLP" type="range" name="barkLP" min="600" max="2400" value="1740"> 
+			</div>
+			<p>Bark góra/dół.</p>
+			<div class="form-group">
+				<input class="thumb-slider" id="barkGD" type="range" name="barkGD" min="800" max="2000" value="850"> 
+			</div>
+			<p>Łokieć.</p>
+			<div class="form-group">
+				<input class="thumb-slider" id="lokiec" type="range" name="lokiec" min="900" max="2450" value="950"> 
+			</div>
+			<p>Nadgarstek.</p>
+			<div class="form-group">
+				<input class="thumb-slider" id="nadgarstek" type="range" name="nadgarstek" min="400" max="2400" value="1680"> 
+			</div>
+			<p>Szczęki.</p>
+			<div class="form-group">
+				<input class="thumb-slider" id="szczeki" type="range" name="szczeki" min="820" max="1800" value="900"> 
+			</div>
 
 
-				<div id="test">0</div><input type="button" class="btn btn-success" id="stopserwa" value="Stop serwa" /><input type="button" class="btn btn-success" id="zaparkuj_serwa" value="Zaparkuj" />
+			<div id="test">0</div><input type="button" class="btn btn-success" id="stopserwa" value="Stop serwa" /><input type="button" class="btn btn-success" id="zaparkuj_serwa" value="Zaparkuj" />
+		</div>
+	</div>
+</div>
+<!-- KAFEL wideo===================================================================== -->
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption">
+			<h3>Wideo</h3>
+			<p id="xform">
+			<input type="button" class="btn btn-success" id="rotate" value="ROTATE"/>
+			<input type="button" class="btn btn-success" id="mirror" value="MIRROR"/>
+			<input type="button" class="btn btn-success" id="flip" value="FLIP"/>
+			</p>
+			<p class="xform-p"></p>
+			<p id="streamwrap" class="xform-p">
+				<img id="streamimage" class="xform" src="" height="300" width="300"/>
+				<canvas id="canvas-video" width="300" height="300"></canvas>
+			</p>
+		</div>
+	</div>
+</div>
+<!-- KAFEL jazda ===================================================================== -->
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption" id="jazda">
+			<div class="device">
+			<div class="device-button"></div>
+			<div class="device-screen-wrapper">
+				<div class="device-screen">
+					<div id="hitarea" class="animate" style="touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); transform: translate3d(235px, 100px, 0px) scale(1, 1) rotate3d(0, 0, 0, 0deg);"></div>
+				</div>
+			</div>
+			</div>
+			<div id="silniki_test">0</div>
+			<div class="btn btn-success" id="stopsilniki" >Stop silniki </div>
+			<p id="silniki_prady">Silnik lewy: 0.0A Silnik prawy: 0.0A</p>
+		</div>
+	</div>
+</div>
+<!-- KAFEL temperatury =============================================================== -->
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption">
+			<h3>Temperatury</h3>
+			<div class="form-group">
+				<p id="pTemp1">Wewnątrz:</p><p id="pTemp2"Zewnątrz:></p> 
+			</div>
+			<h3>Napięcie zasilania</h3>
+			<div class="form-group">
+				<p id="napiecie">0V</p> 
 			</div>
 		</div>
 	</div>
-	<!-- KAFEL wideo===================================================================== -->
-	<div class="col-sm-12 col-md-4">
-		<div class="thumbnail text-center green-thumb">
-			<div class="caption green-caption">
-				<h3>Wideo</h3>
-				<p id="xform">
-				<input type="button" class="btn btn-success" id="rotate" value="ROTATE"/>
-				<input type="button" class="btn btn-success" id="mirror" value="MIRROR"/>
-				<input type="button" class="btn btn-success" id="flip" value="FLIP"/>
-				</p>
-				<p class="xform-p"></p>
-				<p id="streamwrap" class="xform-p">
-					<img id="streamimage" class="xform" src="" height="300" width="300"/>
-					<canvas id="canvas-video" width="300" height="300"></canvas>
-				</p>
-			</div>
-		</div>
-	</div>
-	<!-- KAFEL jazda ===================================================================== -->
-	<div class="col-sm-12 col-md-4">
-		<div class="thumbnail text-center green-thumb">
-			<div class="caption green-caption" id="jazda">
-				<div class="device">
-				<div class="device-button"></div>
-				<div class="device-screen-wrapper">
-					<div class="device-screen">
-						<div id="hitarea" class="animate" style="touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); transform: translate3d(235px, 100px, 0px) scale(1, 1) rotate3d(0, 0, 0, 0deg);"></div>
-					</div>
-				</div>
-				</div>
-				<div id="silniki_test">0</div>
-				<div class="btn btn-success" id="stopsilniki" >Stop silniki </div>
-				<p id="silniki_prady">Silnik lewy: 0.0A Silnik prawy: 0.0A</p>
-			</div>
-		</div>
-	</div>
-	<!-- KAFEL temperatury =============================================================== -->
-	<div class="col-sm-12 col-md-4">
-		<div class="thumbnail text-center green-thumb">
-			<div class="caption green-caption">
-				<h3>Temperatury</h3>
-				<div class="form-group">
-					<p id="pTemp1">Wewnątrz:</p><p id="pTemp2"Zewnątrz:></p> 
-				</div>
-				<h3>Napięcie zasilania</h3>
-				<div class="form-group">
-					<p id="napiecie">0V</p> 
-				</div>
-			</div>
-		</div>
-	</div>
+</div>
 
 <% } %>
-</div>
-</div>
+
 <% if (user) { %>
 <script type="text/javascript" src="/js/dotyk.js"></script>
-<script type="text/javascript">
-//kamera
-var socket_kamera = io.connect("http://"+location.hostname+":8070");
-socket_kamera.binaryType = 'arraybuffer';
-socket_kamera.send(new ArrayBuffer);
-
-var canvas = document.getElementById('canvas-video');
-var context = canvas.getContext('2d');
-var img = new Image();
-
-// show loading notice
-context.fillStyle = '#333';
-context.fillText('Loading...', canvas.width/2-30, canvas.height/3);
-
-socket_kamera.on('frame', function (data) {
-  // Reference: http://stackoverflow.com/questions/24107378/socket-io-began-to-support-binary-stream-from-1-0-is-there-a-complete-example-e/24124966#24124966
-  var uint8Arr = new Uint8Array(data.buffer);
-  var str = String.fromCharCode.apply(null, uint8Arr);
-  var base64String = btoa(str);
-
-  img.onload = function () {
-    context.drawImage(this, 0, 0, canvas.width, canvas.height);
-  };
-  img.src = 'data:image/png;base64,' + base64String;
-});
-</script>
+<script type="text/javascript" src="/js/kamera.js"></script>
 
 
 <% } %>
-</body>
-</html>
+<%- include('stopka', {user: user}) %>
 
 
 

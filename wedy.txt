@@ -1,4 +1,17 @@
-﻿strumień video leci przez mjpg-streamer bo mało obciąża system.
+﻿wycieki w opencv dla node
+SOLVED: nano /etc/crontab and add line:
+* * * * * root sync; sync; sync; echo 3 >/proc/sys/vm/drop_caches;
+It isn't beautiful, but it works.
+ zwalnienie co 1 min cachy w systemie (trochę pomaga, ale nie odzyskuje wszystkiego)
+
+agresywne zwalnianie pamięci
+node --expose-gc index.js
+trasy pamieci
+node --trace_gc app.js
+
+
+
+strumień video leci przez mjpg-streamer bo mało obciąża system.
 https://github.com/jacksonliam/mjpg-streamer.git ma odsługę opencv w wersji 3.1
 wget http://lilnetwork.com/download/raspberrypi/mjpg-streamer.tar.gz
 sudo apt-get install libv4l-dev libjpeg8-dev imagemagick build-essential cmake subversion

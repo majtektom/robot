@@ -1,0 +1,26 @@
+<%- include('header', {user: user}) %>
+<h3 class="thumbnail text-center green-thumb">Wykryte ruchy <a href="/foty?del=ALL" class="btn btn-success">Usuń wszystkie foty</a></h3>
+<%
+var ile=21; var dd=strona*ile-ile+1;
+ for(var i=ile_all-dd; i > ile_all-dd-ile && i>=0; i--) { 
+ %>
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption">
+		<p><%= list_foto[i] %></p>
+		<img class="xform" src="/fotki/<%= list_foto[i] %>" height="300" width="300"/>
+		<a href="/foty?del=<%= list_foto[i]%>" class="btn btn-success">Usuń</a>
+		</div>
+	</div>
+</div>
+<% } %>
+<p class="text-center">
+<% if ((strona>1)) { %>
+<a href="/foty?strona=<%=strona-1%>" class="btn btn-success">Poprzednie</a>
+<% } %>
+Strona <%=strona%> z <%=stron%> 
+<% if ((strona< stron)) { %>
+<a href="/foty?strona=<%=strona-(-1)%>" class="btn btn-success">Następne</a>
+<% } %>
+</p>
+<%- include('stopka', {user: user}) %>

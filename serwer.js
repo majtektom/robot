@@ -1,7 +1,7 @@
 var wire=require('./1wire');
 var express = require('express');
 var app=express();
-var session = require('express-session'); //You should already have this line in your app
+var session = require('express-session');
 var body_parser=require('body-parser');
 var passport = require('passport');
 var Strategy = require('passport-local').Strategy;
@@ -11,14 +11,17 @@ var cookieParser = require('cookie-parser');
 //connect = require('connect');
 var db = require('./nodeweb/db');
 var http = require('http').Server(app);
+var url = require('url');
+//var url_parts = url.parse(request.url, true);
+//var query = url_parts.query;
 var io = require('socket.io')(http);
 var i2c = require('i2c');
+var fs = require("fs");//operacje na plikach
 
 var socketioRedis = require("passport-socketio-redis");
 var redis = require("redis").createClient();
 var RedisStore = require('connect-redis')(session);
 //var RedisUrl = require('redisurl');
-
 
 var address = 0x10;//adres atmegi na lini i2c
 var atmega = new i2c(address, {device: '/dev/i2c-1'}); 
@@ -67,12 +70,15 @@ passport.deserializeUser(function(id, cb) {
 
 
 
-// Configure view engine to render EJS templates.
+// Configure view engine to render EJS templates. pug - inny silnik
 app.set('views', __dirname + '/nodeweb/views');
 app.set('view engine', 'ejs');
 		
 app.use(express.static(__dirname+'/nodeweb/'))
-
+//app.use(express.json());
+//app.use(express.urlencoded());
+//app.use(express.methodOverride());
+//app.use(app.router);
 
 // Use application-level middleware for common functionality, including
 // logging, parsing, and session handling.
@@ -122,14 +128,17 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-
-http.listen(8080, function(){
-  console.log('nasuchuję na *:8080');
+var server=http.listen(8080, function(){
+  console.log('nasuchuję na porcie:',server.address().port);
 });
 // Define routes ----------------------------------------------------------------------------------
 app.get('/',
   function(req, res) {
-    res.render('home', { user: req.user });
+	require('connect-ensure-login').ensureLoggedIn(),
+    res.render('home', {
+		user: req.user,
+		url: req.url
+		});
   });
  
 //app.get('/', function(req, res){
@@ -138,7 +147,7 @@ app.get('/',
 
 app.get('/login',
   function(req, res){
-    res.render('home', { user: req.user });
+    res.render('home', { user: req.user,url: req.url });
   });
   
 app.post('/login', 
@@ -156,8 +165,65 @@ app.get('/logout',
 app.get('/profile',
   require('connect-ensure-login').ensureLoggedIn(),
   function(req, res){
-    res.render('profile', { user: req.user });
+    res.render('profile', { 
+		user: req.user,
+		url: req.url
+		});
   });
+  
+ app.get('/foty',
+   require('connect-ensure-login').ensureLoggedIn(),
+  function(req, res){
+	  var url_parts =url.parse(req.url,true);
+	  var url1= req.url.split("?")
+	  var query=url_parts.query;
+	  if(!query.strona)query.strona=1;
+	  if(query.del){
+		  //usuwamy pliki
+		  if(query.del=="ALL"){//usuwamy wszystkie
+			  fs.readdir("/home/pi/robot/nodeweb/fotki",function(err, files){
+			   if (err) {
+				  return console.error(err);
+			   } 
+			    if (files.length > 0)
+				for (var i = 0; i < files.length; i++) {
+				  var filePath = "/home/pi/robot/nodeweb/fotki" + '/' + files[i];
+				  if (fs.statSync(filePath).isFile())
+					fs.unlinkSync(filePath);
+				}
+			  });
+		  }else
+			  fs.unlinkSync("/home/pi/robot/nodeweb/fotki/"+query.del);
+			  
+	  }
+	 // console.log(req.url);
+	 // console.log("query ",query);
+	 //lista plików do wyświetlenia
+	 fs.readdir("/home/pi/robot/nodeweb/fotki",function(err, files){
+	   if (err) {
+		  return console.error(err);
+	   } 
+		
+		var ile=21;//21 obrazów na strone
+		var ile_all=files.length;
+		var start=(query.strona-1)*ile;
+		var end=ile+start;
+		var stron=Math.floor(ile_all/ile)+1;
+		if(end > ile_all) end =ile_all;
+		
+		res.render('foty', { 
+		user: req.user,
+		list_foto: files,	
+		ile_start: start,
+		ile_end: end,
+		strona: query.strona,
+		stron: stron,
+		ile_all: ile_all,
+		url: url1[0]
+		});
+	});
+
+  }); 
 
 
 
@@ -173,9 +239,10 @@ port.on('error', function(err) {
 })
 
 port.on('data', function(data) {
-  console.log('data uart: ', data);
+  //console.log('data uart: ', data);
 })
 
+//io.on('connection', require('./kamera_ruch'));
 
 io.on('connection', function(socket){
 	console.log('a user connected:'+socket);
@@ -188,13 +255,13 @@ io.on('connection', function(socket){
 	});
   
 	socket.on('gettemperature', function(msg){
-		console.log('gettemperature: '+msg);
+		//console.log('gettemperature: '+msg);
 		t1=wire.GetTempe1();
 		t2=wire.GetTempe2();
 
 		io.emit('temperatura1',t1);
 		io.emit('temperatura2',t2);
-		console.log('temparatury: T1: '+t1+'°C T2:'+t1+'°C')
+		//console.log('temparatury: T1: '+t1+'°C T2:'+t1+'°C')
 	});
 	
 	socket.on('restart', function(msg){
@@ -206,7 +273,7 @@ io.on('connection', function(socket){
 	});
 	
 	socket.on('silniki', function(msg){
-		console.log('silniki: '+msg);
+		//console.log('silniki: '+msg);
 		var tab= msg.split(";")
 		//var dane = new Uint8Array(4);
 		//console.log(dane);
@@ -232,12 +299,12 @@ io.on('connection', function(socket){
 			
 		});
 		var dane=pradlewy.toFixed(3)+";"+pradprawy.toFixed(3)+";"+napiecie.toFixed(3);
-		console.log('getprady: '+dane);
+		//console.log('getprady: '+dane);
 		io.emit('napiecie_i_prady',dane);
 	});
 	
 	socket.on('serwa', function(msg){
-		console.log('serwa: '+msg);
+		//console.log('serwa: '+msg);
 		
 		var data1= new Uint8Array(6);
 		//spowalniamy serwa z zadaną prędkością będzie dążyć do zadanego położenia
