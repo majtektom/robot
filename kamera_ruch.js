@@ -48,14 +48,44 @@ var GREEN = [0, 255, 0]; // B, G, R
 var WHITE = [255, 255, 255]; // B, G, R
 // WebSocket server
 var io = require('socket.io')(server);
+var path='/tmp/out/';
+var tmp=0;
+//czy katalog istnieje
 
-fs.watch('/tmp', (eventType, filename) => {
+function checkDirectorySync(directory) {
+  try {
+    fs.statSync(directory);
+  } catch(e) {    
+    try {
+        fs.mkdirSync(directory);
+    } catch(e) {
+        return e;
+    }
+  }
+}
+checkDirectorySync(path);  
+
+function przetwarzaj(){
+	if(tmp!=0){
+		fs.readFile(tmp, function(err, buf){
+			io.emit('frame', { image: true, buffer: buf, type:'Private Msg' });
+			//io.emit('frame', { image: true, buffer: buf.toString('base64') });
+		});
+			//cv.readImage(tmp, function(err, im){//cieknie edycja /etc/crontab rozwiązała sprawę
+			//if (err) throw err;
+			//if(connection>0) io.emit('frame', {image: true, buffer: im.toBuffer() });
+		
+			//});
+		}
+}
+fs.watch(path, (eventType, filename) => {
+ //console.log(path+filename+" event: "+eventType);
  if (filename && eventType=='change'){
-
+ 
 	 var tab= filename.split(".");
 	 if(tab[1]=="jpg"){
-		 //console.log('/tmp/'+filename);
-		cv.readImage('/tmp/'+filename, function(err, im){//cieknie edycja /etc/crontab rozwiązała sprawę
+/*
+		 cv.readImage(path+filename, function(err, im){//cieknie edycja /etc/crontab rozwiązała sprawę
 			 if (err) throw err;
 			//im.convertGrayscale()
 			//im.canny(70, 300)
@@ -112,8 +142,14 @@ fs.watch('/tmp', (eventType, filename) => {
 		im_canny=null;
 		kk=null;
 		diff=null;
-	  }//czy jpg
-	}
+		
+*/		
+		tmp=path+filename;
+		setTimeout(przetwarzaj,20);
+		
+		
+	}//czy jpg
+  }	
  });
 
 

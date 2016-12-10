@@ -35,8 +35,8 @@ var context = canvas.getContext('2d');
 var img = new Image();
 
 // show loading notice
-context.fillStyle = '#333';
-context.fillText('Loading...', canvas.width/2-30, canvas.height/3);
+context.fillStyle = '#000';
+context.fillText('Wczytywanie...', canvas.width/2-30, canvas.height/3);
 
 socket_kamera.on('frame', function (data) {
   // Reference: http://stackoverflow.com/questions/24107378/socket-io-began-to-support-binary-stream-from-1-0-is-there-a-complete-example-e/24124966#24124966

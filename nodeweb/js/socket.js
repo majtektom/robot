@@ -38,10 +38,15 @@ socket.on('serwa', function(msg){
 		}
 		
 	});
+socket.on('wykryto_ruch', function(msg){
+		var wynik = $('#wykryto_ruch');
+		wynik.text(msg+" razy wyktyto ruch");
+	});
  //wywoływana cyklicznie
 function updateUI() {
 		socket.emit('gettemperature', 't1,t2');
 		socket.emit('getprady', 'A;A;V');
+		socket.emit('wykryto_ruch', '');
 		var d = new Date();
 		time1 = d.getTime();
 }

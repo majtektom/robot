@@ -35,6 +35,7 @@ var pradlewy=0;
 var pradprawy=0;
 var napiecie=0;
 
+var wykryto_ruch=0;
 // Configure the local strategy for use by Passport.
 //
 // Strategia lokalna wymaga `verify` funkcję, która odbiera dane uwierzytelniające (` username` i `password`) przedstawione przez użytkownika.
@@ -171,7 +172,7 @@ app.get('/profile',
 		});
   });
   
- app.get('/foty',
+app.get('/foty',
    require('connect-ensure-login').ensureLoggedIn(),
   function(req, res){
 	  var url_parts =url.parse(req.url,true);
@@ -340,5 +341,19 @@ io.on('connection', function(socket){
 		io.emit('serwa',msg);
 	});
 	
+	socket.on('wykryto_ruch', function(msg){
+		io.emit('wykryto_ruch',wykryto_ruch);
+	});
+	
 });
 
+fs.watch("/home/pi/robot/nodeweb/fotki/", (eventType, filename) => {
+   //console.log(filename+" "+eventType);
+   if (filename && eventType=='rename'){
+ 	 var tab= filename.split(".");
+	 if(tab[1]=="jpg"){
+		wykryto_ruch++;
+		
+	}//czy jpg
+  }	
+ });

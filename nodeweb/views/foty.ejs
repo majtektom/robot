@@ -1,4 +1,5 @@
 <%- include('header', {user: user}) %>
+
 <h3 class="thumbnail text-center green-thumb">Wykryte ruchy <a href="/foty?del=ALL" class="btn btn-success">Usuń wszystkie foty</a></h3>
 <%
 var ile=21; var dd=strona*ile-ile+1;
@@ -8,6 +9,7 @@ var ile=21; var dd=strona*ile-ile+1;
 	<div class="thumbnail text-center green-thumb">
 		<div class="caption green-caption">
 		<p><%= list_foto[i] %></p>
+		<p class="info"><%= list_foto[i] %></p>
 		<img class="xform" src="/fotki/<%= list_foto[i] %>" height="300" width="300"/>
 		<a href="/foty?del=<%= list_foto[i]%>" class="btn btn-success">Usuń</a>
 		</div>
@@ -23,4 +25,17 @@ Strona <%=strona%> z <%=stron%>
 <a href="/foty?strona=<%=strona-(-1)%>" class="btn btn-success">Następne</a>
 <% } %>
 </p>
+<script>
+var i=0;
+$(function(){
+	$(".info").text(function(index,currentcontent){
+			var tab= currentcontent.split("_");
+			//2016_12_10_12_26_35_picture_000001530.jpg
+			return (tab[2]+"/"+tab[1]+"/"+tab[0]+" Godz.: "+tab[3]+":"+tab[4]+":"+tab[5]);
+    });
+});
+	
+
+
+</script>
 <%- include('stopka', {user: user}) %>
