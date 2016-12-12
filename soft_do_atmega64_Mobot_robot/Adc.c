@@ -4,7 +4,7 @@
 #include <avr/interrupt.h>
 #include "adc.h"
 //#include "define.h"
-
+#define ADC_REF ((1<<REFS0)| (1<<REFS1))  //napiecie ref 2.56
 //ustawia nastepny wlaczony kanal jako aktywny
 void adc_next_channel()
 {
@@ -14,9 +14,10 @@ void adc_next_channel()
 		adc_channel+=1;//kanal jeden wyrzej
 		if(adc_channel>7)//poza dostepnymi kanalami
 		adc_channel=POMIAR_0;//ustawiamy 1
+		
 		//sprawdzamy czy jest wlaczony
 		if(bit_is_set(adc_kanal,adc_channel))//jest wiec koniec
-		return;
+			return;
 	}
 }
 
@@ -31,16 +32,22 @@ ISR(ADC_vect,ISR_NOBLOCK)//wywalic przerwania za bardzo spowalnia walnac w petle
 	if(--adc_ile_pomiarow == 0)//koniec pomiarów
 	{
 		ADC_off(); //ma na celu upewnienie sie ze nastepny wynik konwersji nie bedzie dotyczyl poprzednigo kanalu ADC
-		
 		adc_pomiar[adc_channel] = (adc_pomiar[adc_channel]+(pomiar/adc_ilosc_pomiarow))/2.0f;//mozna potegi 2 i przesuwac bitowo
 
 		//ustawia nastepny kanal aktywnym
 		adc_next_channel();
-		//ustawia aktywny kanal multiplexu
-		//ADMUX = (1<<REFS0)| adc_channel;
-		ADMUX = (1<<REFS0)|(1<<REFS1)| adc_channel;
 		adc_ile_pomiarow = adc_ilosc_pomiarow;
 		pomiar = 0;
+		switch(adc_channel){
+			case POMIAR_0: 		ADMUX = ADC_REF| 0b00000;			break;//masa
+			case POMIAR_1:		ADMUX = ADC_REF| 0b00001; 			break;//prad silnika// ; 0b01001  adc1"+" adc0"-" x10
+			case POMIAR_2:		ADMUX = ADC_REF| 0b00010;			break;//masa
+			case POMIAR_3:		ADMUX = ADC_REF| 0b00011;			break;//prad silnika//;  0b01101  adc3"+" adc2"-" x10
+			case POMIAR_4: 		ADMUX = ADC_REF| 0b00100;			break;
+			case POMIAR_5: 		ADMUX = ADC_REF| 0b00101;			break;
+			case POMIAR_6: 		ADMUX = ADC_REF| 0b00110;			break;
+			case POMIAR_7: 		ADMUX = ADC_REF| 0b00111;			break;
+		}
 		ADC_on();
 		ADCSRA|=(1<<ADSC);//start konwersji
 	}
@@ -50,12 +57,13 @@ ISR(ADC_vect,ISR_NOBLOCK)//wywalic przerwania za bardzo spowalnia walnac w petle
 void ADCInit()
 {
 	DDRF = 0x00; //caly port jako wejscie (konieczne gdy uzywamy ADC
+	PORTF =0x00;
 	adc_kanal=0x00;//zaden kana³ nie aktywny
 	adc_ilosc_pomiarow=8;
 	adc_ile_pomiarow=adc_ilosc_pomiarow;
 	adc_channel=0x00;
-	//ADMUX|=(1<<REFS0);    //napiecie ref AVCC
-	ADMUX|=(1<<REFS0)|(1<<REFS1);    //napiecie ref 2.56
+		
+	ADMUX|=ADC_REF;    
 	//preskaler 128 - 125kHz@16MHz, wlaczone przerwania, konwersja ciagla
 	ADCSRA|=(1<<ADIE)|(1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADATE);//(1<<ADFR)|
 	ADCSRB=0;//Free Running mode
@@ -80,8 +88,8 @@ void ADCStartConversion(unsigned char ktory)
 	{
 		ADC_on();	//w³aczamy przetwornik
 		adc_channel=ktory;
-		//ADMUX = (1<<REFS0)| ktory;// to tak zadzia³a? pierwszy wiec ustawiamy ktory kanal
-		ADMUX = (1<<REFS0)| (1<<REFS1)| ktory;// to tak zadzia³a? pierwszy wiec ustawiamy ktory kanal
+
+		ADMUX = ADC_REF | ktory;// to tak zadzia³a? pierwszy wiec ustawiamy ktory kanal
 		ADCSRA|=(1<<ADSC);//wlaczamy pomiar
 	}
 	adc_kanal|=1<<ktory;

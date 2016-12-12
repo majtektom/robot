@@ -11,10 +11,6 @@ union ADCWynik
 	//	unsigned char wynH;
 	//	}ww8;
 };
-//napiecie odniesianie
-#define ADC_U_ref 480
-//rozdzielczosc przetwornika, uref przez ilosc mozliwych próbek
-#define ADC_conv_mul ( ADC_U_ref / 1024.0 )
 
 //definicje dla pomiaru
 #define POMIAR_0    0	//jest zwarte do masy w robocie(do pomiaru ró¿nicowego)
