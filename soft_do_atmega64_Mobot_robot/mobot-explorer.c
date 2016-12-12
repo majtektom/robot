@@ -10,7 +10,7 @@ tomtom
 // Sample TWI transmission commands
 #define I2C_adress 0x10
 
-// prêdkoœæ transmisji w UART
+// prï¿½dkoï¿½ï¿½ transmisji w UART
 #define UART_BAUD_RATE1      921600
 #define UART_BAUD_RATE      9600//921600
 
@@ -58,7 +58,7 @@ int main(void)
 			int ile=I2C_BUF_status.counter;
 			for(int i=0;i<ile;i++){
 			  switch(I2C_Buf[i]){
-				case 0x10://predkoœci silników	po nim s¹ 2 bajty prêdkoœci lewego i prawego silnika
+				case 0x10://predkoï¿½ci silnikï¿½w	po nim sï¿½ 2 bajty prï¿½dkoï¿½ci lewego i prawego silnika
 					i++;
 					unsigned int flagi=I2C_Buf[i];
 					i++;
@@ -69,38 +69,38 @@ int main(void)
 					if(flagi & 0x02) g_info.obroty=-g_info.obroty;
 					//I2C_Buf[0]=45;I2C_Buf[1]=46;I2C_Buf[2]=43;I2C_Buf[3]=47;I2C_Buf[4]=42;
 					break;
-				case 0x11://¿adanie podania pr¹dów silników
-					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysy³a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
+				case 0x11://ï¿½adanie podania prï¿½dï¿½w silnikï¿½w
+					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysyï¿½a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
 					//uint_global_prad_M4 = 0.6745*(pomiar >> 4);//wyliczenie sredniej, przesuniecie w prawo o 4 bity jest rownowazne dzieleniu przez 16
 					I2C_Buf[1]=g_info.prad_silnika1;
 					I2C_Buf[2]=g_info.prad_silnika1>>8;
 					I2C_Buf[3]=g_info.prad_silnika2;
 					I2C_Buf[4]=g_info.prad_silnika2>>8;
 					break;
-				case 0x12://¿adanie podania napiêcia
-					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysy³a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
+				case 0x12://ï¿½adanie podania napiï¿½cia
+					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysyï¿½a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
 					I2C_Buf[1]=g_info.napiecie;
 					I2C_Buf[2]=g_info.napiecie>>8;
 					break;
-				case 0x13://¿adanie podania pradu serw
-					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysy³a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
+				case 0x13://ï¿½adanie podania pradu serw
+					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysyï¿½a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
 					I2C_Buf[1]=g_info.prad_serw;
 					I2C_Buf[2]=g_info.prad_serw>>8;
-				case 0x20://¿adanie ustawienia progu alarmu pradowego nastepna dana to próg
+					break;
+				case 0x20://ï¿½adanie ustawienia progu alarmu pradowego nastepna dana to prï¿½g
 					i++;
 					g_info.prog_alarmu_pradu=I2C_Buf[i];
 					break;
-				case 0x21://¿adanie ustawienia progu alarmu pradowego nastepna dana to próg. 2 bajty
+				case 0x21://ï¿½adanie ustawienia progu alarmu pradowego nastepna dana to prï¿½g. 2 bajty
 					i++;
 					g_info.time_prad=I2C_Buf[i] | I2C_Buf[i+1]<<8;
 					i++;
 					break;
 				default:
-					i++;
 					break;
 			  }
 			}
-			I2C_BUFEmpty();//resetujemy bufor i zezwalamy na nastêpny odbiór/zapis danych
+			I2C_BUFEmpty();//resetujemy bufor i zezwalamy na nastï¿½pny odbiï¿½r/zapis danych
 		}
 		g_info.prad_serw=ADCGetPomiar(PRAD_SERW);
 		g_info.napiecie=ADCGetPomiar(V_BAT);
@@ -110,7 +110,7 @@ int main(void)
 
 		if((g_info.prad_silnika1>g_info.prog_alarmu_pradu || g_info.prad_silnika2>g_info.prog_alarmu_pradu)&&g_info.alarm==AL_OK&&g_info.prog_alarmu_pradu!=0){
 			   g_info.alarm=AL_PRAD_SILNIKOW;
-			   g_info.g_time_tmp1=g_TIMER_ms+g_info.time_prad;;
+			   g_info.g_time_tmp1=g_TIMER_ms+g_info.time_prad;
 			   if(g_info.predkosc>0)g_info.predkosc=-128;
 			   if(g_info.predkosc<0)g_info.predkosc=128;
 			   g_info.obroty=0;//-g_info.obroty;
