@@ -21,7 +21,7 @@ int main(void)
 	DDRD|=1<<LED2;//wyjscie
 	DDRE|=1<<LED3_Z;
 	DDRE|=1<<LED4_Z;
-    g_info.prog_alarmu_pradu=80;
+    g_info.prog_alarmu_pradu=110;
 	g_info.time_prad=1200;
 	uart1_init(UART_BAUD_SELECT(UART_BAUD_RATE1,F_CPU));
 	uart_init(UART_BAUD_SELECT(UART_BAUD_RATE,F_CPU));
@@ -32,18 +32,12 @@ int main(void)
 	ADCStartConversion(M_M1_SENS);//prad 1 silnika
 	ADCStartConversion(V_BAT);//napiecie baterii
 	ADCStartConversion(PRAD_SERW);//prad serw
+	ADCSetIloscPomiarow(8,PRAD_SERW);
 	//ADCStartConversion(PF6);//sonar analogowe wyjscie
     
    I2C_Slave_init(I2C_adress);
-    
 
-	
-    //STEP_init();
-    
     sei();	//globalne wlaczenie przerwan
-	
-//	UART0_print("UART0 test\r\n");
-	//UART1_print("UART1 test\r\n");
 	
 	PORTD|=1<<LED1;//on
 	PORTD&=~(1<<LED2);//off
@@ -53,12 +47,16 @@ int main(void)
 	for(;;) 
 	{ 
 		wdt_reset(); 
+		g_info.prad_serw=ADCGetPomiar(PRAD_SERW);
+		g_info.napiecie=ADCGetPomiar(V_BAT);
+		g_info.prad_silnika1=ADCGetPomiar(M_M1_SENS);
+		g_info.prad_silnika2=ADCGetPomiar(M_M2_SENS);
 		if(I2C_BUF_status.st_ready){//mamy dane do odczytania
 			//przetwarzamy
 			int ile=I2C_BUF_status.counter;
 			for(int i=0;i<ile;i++){
 			  switch(I2C_Buf[i]){
-				case 0x10://predko�ci silnik�w	po nim s� 2 bajty pr�dko�ci lewego i prawego silnika
+				case 0x10://predkości silników	po nim są 2 bajty prędkoćci lewego i prawego silnika
 					i++;
 					unsigned int flagi=I2C_Buf[i];
 					i++;
@@ -67,48 +65,48 @@ int main(void)
 					if(g_info.alarm==AL_OK) g_info.obroty=I2C_Buf[i];//prawego
 					if(flagi & 0x01) g_info.predkosc=-g_info.predkosc;
 					if(flagi & 0x02) g_info.obroty=-g_info.obroty;
+					g_info.time_lost=g_TIMER_ms;
 					//I2C_Buf[0]=45;I2C_Buf[1]=46;I2C_Buf[2]=43;I2C_Buf[3]=47;I2C_Buf[4]=42;
 					break;
-				case 0x11://�adanie podania pr�d�w silnik�w
-					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysy�a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
+				case 0x11://Żadanie podania prądów silników
+					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysyła 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
 					//uint_global_prad_M4 = 0.6745*(pomiar >> 4);//wyliczenie sredniej, przesuniecie w prawo o 4 bity jest rownowazne dzieleniu przez 16
 					I2C_Buf[1]=g_info.prad_silnika1;
 					I2C_Buf[2]=g_info.prad_silnika1>>8;
 					I2C_Buf[3]=g_info.prad_silnika2;
 					I2C_Buf[4]=g_info.prad_silnika2>>8;
 					break;
-				case 0x12://�adanie podania napi�cia
-					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysy�a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
+				case 0x12://Żadanie podania napięcia
+					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysyła 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
 					I2C_Buf[1]=g_info.napiecie;
 					I2C_Buf[2]=g_info.napiecie>>8;
 					break;
-				case 0x13://�adanie podania pradu serw
-					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysy�a 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
+				case 0x13://Żadanie podania pradu serw
+					//I2C_Buf[0] pomijamy bo biblioteka na rasberypi wysyła 1 bajt w czasie odczytu danych i nadpisuje nam pierwszy bajt
 					I2C_Buf[1]=g_info.prad_serw;
 					I2C_Buf[2]=g_info.prad_serw>>8;
 					break;
-				case 0x20://�adanie ustawienia progu alarmu pradowego nastepna dana to pr�g
+				case 0x20://Żadanie ustawienia progu alarmu pradowego nastepna dana to prog
 					i++;
 					g_info.prog_alarmu_pradu=I2C_Buf[i];
 					break;
-				case 0x21://�adanie ustawienia progu alarmu pradowego nastepna dana to pr�g. 2 bajty
+				case 0x21://Żadanie ustawienia progu alarmu pradowego nastepna dana to prog. 2 bajty
 					i++;
 					g_info.time_prad=I2C_Buf[i] | I2C_Buf[i+1]<<8;
 					i++;
+					break;
+				case 0x22://info o stanie systemu
+					I2C_Buf[1]=g_info.alarm;
 					break;
 				default:
 					break;
 			  }
 			}
-			I2C_BUFEmpty();//resetujemy bufor i zezwalamy na nast�pny odbi�r/zapis danych
+			I2C_BUFEmpty();//resetujemy bufor i zezwalamy na następny odbiór/zapis danych
 		}
-		g_info.prad_serw=ADCGetPomiar(PRAD_SERW);
-		g_info.napiecie=ADCGetPomiar(V_BAT);
-		g_info.prad_silnika1=ADCGetPomiar(M_M1_SENS);
-		g_info.prad_silnika2=ADCGetPomiar(M_M2_SENS);
 
-
-		if((g_info.prad_silnika1>g_info.prog_alarmu_pradu || g_info.prad_silnika2>g_info.prog_alarmu_pradu)&&g_info.alarm==AL_OK&&g_info.prog_alarmu_pradu!=0){
+		if((g_info.prad_silnika1>g_info.prog_alarmu_pradu || g_info.prad_silnika2>g_info.prog_alarmu_pradu)&&
+			g_info.alarm==AL_OK && g_info.prog_alarmu_pradu!=0){
 			   g_info.alarm=AL_PRAD_SILNIKOW;
 			   g_info.g_time_tmp1=g_TIMER_ms+g_info.time_prad;
 			   if(g_info.predkosc>0)g_info.predkosc=-128;
@@ -123,13 +121,25 @@ int main(void)
 				g_info.alarm=AL_OK;
 			}
 		}
+		//gdy przez 1 sekundę nie ma nowych danych o predkości wyłacz silniki
+		if(g_TIMER_ms>(g_info.time_lost+1000)){
+			g_info.predkosc=0;
+			g_info.obroty=0;
+		}
 		 
+		if( g_info.napiecie<430){//9.5V
+			g_info.alarm=AL_NAPIECIE;
+			g_info.predkosc=0;
+			g_info.obroty=0;
+		}else{
+			if(g_info.alarm==AL_NAPIECIE) g_info.alarm=AL_OK;
+		}
 		MOTOR_drive(g_info.predkosc+g_info.obroty,g_info.predkosc-g_info.obroty);
 
-		ii++;
-        if((ii%80000)==0){
-			 PORTD^=1<<LED1;//migaj dioda jak odbiera;
-		}
+		//ii++;
+        //if((ii%40000)==0){
+		//	 PORTD^=1<<LED1;
+		//}
    }
     
 return 0;

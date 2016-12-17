@@ -108,7 +108,8 @@ struct TELEMETRIA
 	unsigned int prog_alarmu_pradu;
 	//ile czasu ma czekaæ zanim wy³¹czy silniki jak wykryje alarm pradu 
 	unsigned int time_prad;
-	
+	//ostatni czas odbioru predkosci
+	unsigned int time_lost;
 
 }g_info;
 
