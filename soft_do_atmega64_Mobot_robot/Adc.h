@@ -1,20 +1,7 @@
 #ifndef _ADC_H_
 #define _ADC_H_
-/*obs³uga konwertera analogowo-cyfrowego
-*/
-union ADCWynik
-{
-	unsigned int wynik;
-	//	struct w8
-	//	{
-	unsigned char wynL[2];
-	//	unsigned char wynH;
-	//	}ww8;
-};
-//napiecie odniesianie
-#define ADC_U_ref 480
-//rozdzielczosc przetwornika, uref przez ilosc mozliwych próbek
-#define ADC_conv_mul ( ADC_U_ref / 1024.0 )
+#include<stdint.h>
+
 
 //definicje dla pomiaru
 #define POMIAR_0    0	//jest zwarte do masy w robocie(do pomiaru ró¿nicowego)
@@ -32,20 +19,20 @@ volatile unsigned char adc_kanal;
 //aktualnie mnierzony kanal
 volatile unsigned char adc_channel;
 
-//ilosc pomiarów w pojedynczym pomiarze(wyliczana jest srednia)
-unsigned char adc_ilosc_pomiarow;
-
 //przechowuje wyniki pomiaru z kolejnych pinów
-volatile unsigned int adc_pomiar[8];
+volatile uint32_t adc_pomiar[8];
+
+//przechowuje z ilu probek usredniac dany pomiar
+volatile unsigned char adc_dt[8];
 
 //inicjacja modu³u adc
 void ADCInit();
 
 //ilosc pomiarów w czasie jednego pomiaru (wylicza sredni¹ i zwraca wynik)
-void ADCSetIloscPomiarow(unsigned char ile);
+void ADCSetIloscPomiarow(unsigned char ile,unsigned char ktory);
 
 //ilosc pomiarów w czasie jednego pomiaru (wylicza sredni¹ i zwraca wynik)
-unsigned char ADCGetIloscPomiarow();
+unsigned char ADCGetIloscPomiarow(unsigned char ktory);
 
 //start konwersji z podanego pinu konwertera
 void ADCStartConversion(unsigned char ktory);
@@ -60,10 +47,6 @@ void ADCStopConversion(unsigned char ktory);
 //-1 to blad nie znany ktory
 unsigned int ADCGetPomiar(unsigned char ktory);
 
-//wy³aczenie przetwornika
-void ADC_off();
 
-//	Funkcja wlacza przetwornik ADC, nie rozpoczynajac konwersji
-void ADC_on();
 
 #endif

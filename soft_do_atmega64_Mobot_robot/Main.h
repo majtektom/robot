@@ -86,9 +86,7 @@ oraz definicje mart sluzacych do zapalania, gaszenia oraz przelaczania diod LED
 
 
 
-volatile unsigned int drive_timer;
-volatile int global_left_speed;
-volatile int global_right_speed;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////

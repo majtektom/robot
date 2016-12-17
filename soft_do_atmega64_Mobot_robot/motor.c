@@ -4,11 +4,8 @@
 /*******************************************************************************
 Funkcja:
 	void MOTOR_init(void)
-Argumenty: 
-	- brak
 Opis:
 	Inicjalizacja timera 3 do generowania sygnalu PWM (Pulse Width Modulation)
-o rozdzielczosci 8 bitow i czestotliwosci ok 4kHz
 *******************************************************************************/
 void MOTOR_init(void)
 {
@@ -93,8 +90,6 @@ void MOTOR_drive(signed int left_speed,signed int right_speed)
 /*******************************************************************************
 Funkcja:
 	void MOTOR_break(void)
-Argumenty: 
-	- brak
 Opis:
 	Realizuje hamowanie przez zwarcie obu wyprowadzen silnikow do masy. Przydatna
 da awaryjnego zatrzymania robota.
@@ -110,8 +105,6 @@ void MOTOR_break(void)
 /*******************************************************************************
 Funkcja:
 	void MOTOR_sleep(void)
-Argumenty: 
-	- brak
 Opis:
 	Funkcja wprowadza drivery silnikow od kol napedowych oraz driver silnika 
 krokowego w stan uspienia (wspolne wyprowadzenie PG3_SLEEP), obnizajac pobor 

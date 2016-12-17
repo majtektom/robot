@@ -1,19 +1,12 @@
 /*******************************************************************************
 							Obsluga timera 0
-********************************************************************************
-ver. 1.0
-Pawel Piatek
-p.piatek@wobit.com.pl
-WObit 2008
-
-Opis:
 	Plik zawiera deklaracje funkcji do obslugi timera0
 *******************************************************************************/
 #ifndef __TIMER_H
 #define __TIMER_H
-
+volatile unsigned int g_TIMER_ms;
 void TIMER_init(void);
-void TIMER_wait_ms(unsigned int time_ms);
+unsigned int TIMER_GetTime();
 
 
 #endif //__TIMER_H

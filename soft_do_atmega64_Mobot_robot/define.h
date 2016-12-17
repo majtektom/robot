@@ -1,3 +1,5 @@
+#ifndef __DEFINE_H
+#define __DEFINE_H
 // Iloœæ elementów tablicy
 #define ELEMS(p) (sizeof(p)/sizeof(p[0]))
 
@@ -18,7 +20,7 @@
 //silniki robota
 #define M_SLEEP_IO		G//na ktorej lini portu
 #define M_SLEEP			PG3	//usypianie driverow
-#define M_FS_IO 		C//na kturej lini portu
+#define M_FS_IO 		C//na ktorej lini portu
 #define M_FS 			PC2//diagnostyczne do silnikow
 //pierwszy silnik
 #define M_M1_IN1_IO		A
@@ -59,6 +61,10 @@
 #define V_BAT_IO		F
 #define V_BAT			PF7//napiecie na baterii
 
+// napiecie na baterii
+#define PRAD_SERW_IO	F
+#define PRAD_SERW		PF6//prad pobierany przez serwa
+
 //zlacze mobot rcrv2
 #define RC_TX_IO		E
 #define RC_TX 			PE1//tx
@@ -81,9 +87,33 @@
 #define SHARP2_IO		F
 #define SHARP2 			PF7//analogowy sygnal z czyjnika odleglosci
 
+enum ALERTY{	AL_OK=0,AL_PRAD_SILNIKOW,AL_NAPIECIE	};
+struct TELEMETRIA
+{
+	unsigned int prad_silnika1;
+	unsigned int prad_silnika2;
+	unsigned int prad_serw;
+	unsigned int napiecie;
+	//predkosc robota
+	int predkosc;
+	//obrot robota
+	int obroty;
+	//do odmierzania odcinków czasu
+	unsigned int g_time_tmp1;
+	unsigned int g_time_tmp2;
+	//flaga alarmów 
+	//AL_OK - wszystko ok   AL_PRAD_SILNIKOW- za duzy prad na silnikach 
+	int alarm;
+	//prog alarmu pradu jak wynosi 0 to blokada jest wy³¹czona
+	unsigned int prog_alarmu_pradu;
+	//ile czasu ma czekaæ zanim wy³¹czy silniki jak wykryje alarm pradu 
+	unsigned int time_prad;
+	//ostatni czas odbioru predkosci
+	unsigned int time_lost;
+
+}g_info;
 
 
-
-
+#endif //__DEFINE_H
 
 
