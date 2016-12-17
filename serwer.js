@@ -14,8 +14,11 @@ var http = require('http').Server(app);
 var url = require('url');
 //var url_parts = url.parse(request.url, true);
 //var query = url_parts.query;
-var io = require('socket.io')(http);
+const io = require('socket.io')(http);
 var i2c = require('i2c');
+const os = require('os');
+const child_process = require('child_process');
+
 var fs = require("fs");//operacje na plikach
 
 var socketioRedis = require("passport-socketio-redis");
@@ -27,6 +30,8 @@ var address = 0x10;//adres atmegi na lini i2c
 var atmega = new i2c(address, {device: '/dev/i2c-1'}); 
 
 var SerialPort = require("serialport");
+// Load the TCP Library
+const net = require('net');
 var port = new SerialPort("/dev/ttyAMA0", {
   baudRate: 115200
 }); 
@@ -34,8 +39,66 @@ var port = new SerialPort("/dev/ttyAMA0", {
 var pradlewy=0;
 var pradprawy=0;
 var napiecie=0;
-
+var pradserw=0;
+var serwo_barkLPdata=1740*4;
+var serwo_barkGD=850*4;
+var serwo_lokiec=950*4;
+var serwo_nadgarstek=1680*4;; 
+var serwo_szczeki=900*4;  
+var prog_pradu_silniki=80;
+var opoznienie_alar_prad=1200;
+var sterowanie_silnikami=[0x10,0,0,0];
 var wykryto_ruch=0;
+var info_o_atmedze=0;
+var info_exe= new Uint8Array(5);
+// Keep track of the chat clients
+var clients_socket = [];
+try {
+	info_exe[0]=1;
+// Send a message to all clients
+function broadcast(message, sender) {
+    clients_socket.forEach(function (client) {
+      // Don't want to send it to sender
+      if (client === sender) return;
+      client.write(message);
+    });
+   // process.stdout.write(message)// Log it to the server output too
+}
+function SocketWyslijAll(message) {
+    clients_socket.forEach(function (client) {
+      client.write(message.toString());
+    });
+   // process.stdout.write(message)// Log it to the server output too
+}
+
+
+var process_options= { 
+		env: {user:'pi'},
+		detached: false,
+		stdio: ['pipe','pipe','pipe']
+};
+var child_exe=child_process.spawn("/home/pi/robot/opencv_ruch/wykryj",['-parametr','par2'],process_options);
+
+child_exe.stdout.on('data',function(data){ 
+	
+	console.log("wynik z exe "+data);
+});
+child_exe.stderr.on('data',function(data){ console.log("exe bład "+data.toString());});
+child_exe.on('exit',function(code){		console.log("proces zakończony z kodem: "+code);	});
+
+
+process_options= { 
+		env: {user:'pi'},
+		encoding:'utf8'
+};
+var child_js=child_process.fork("/home/pi/robot/kamera_ruch.js",['-parametr','par2'],process_options);
+//odbieranie z wątku
+child_js.on('message',function(message){
+	console.log(message);
+});
+//wysyłanie do wątku
+//child_js.send({cld:command}); 
+
 // Configure the local strategy for use by Passport.
 //
 // Strategia lokalna wymaga `verify` funkcję, która odbiera dane uwierzytelniające (` username` i `password`) przedstawione przez użytkownika.
@@ -246,7 +309,7 @@ port.on('data', function(data) {
 //io.on('connection', require('./kamera_ruch'));
 
 io.on('connection', function(socket){
-	console.log('a user connected:'+socket);
+	console.log('user connected:'+socket);
 	
 	socket.on('disconnect', function(){
 		console.log('user disconnected');
@@ -275,34 +338,61 @@ io.on('connection', function(socket){
 	
 	socket.on('silniki', function(msg){
 		//console.log('silniki: '+msg);
-		var tab= msg.split(";")
+		sterowanie_silnikami= msg.split(";")
 		//var dane = new Uint8Array(4);
 		//console.log(dane);
-		atmega.write(tab, function(err) {});
-		io.emit('silniki',tab);
+		
+		io.emit('silniki',sterowanie_silnikami);
+	});
+	
+	socket.on('os_info', function(msg){
+		//console.log('silniki: '+msg);
+		var tab=os.uptime()+";"+os.loadavg()+";"+os.freemem();//JSON.stringify(os.cpus())
+		tab+=";"+info_o_atmedze;
+		io.emit('os_info',tab);
 	});
 	
 	socket.on('getprady', function(msg){
 		//console.log('getprady: '+msg);
-		//prad
-		atmega.readBytes(0x11, 6, function(err, res) {
-			//console.log(err+' prad: '+res);
-			pradlewy= Number(res[1]) | Number(res[2])<<8;
-			pradlewy= pradlewy*(375*(247/1024))/10000;
-		    pradprawy=Number(res[3]) | Number(res[4])<<8;
-			pradprawy=pradprawy*(375*(247/1024))/10000;
-		});
-		//napiecie
-		atmega.readBytes(0x12, 4, function(err, res) {
-			//console.log(err+' napiecie: '+Number(res[0])+' '+Number(res[1])+' '+Number(res[2])+' '+Number(res[3])+' '+Number(res[4]));
-			napiecie=Number(res[1]) | Number(res[2])<<8;
-			napiecie=(napiecie*(247/1024)/10);//popraw
-			
-		});
-		var dane=pradlewy.toFixed(3)+";"+pradprawy.toFixed(3)+";"+napiecie.toFixed(3);
+		
+		var dane=pradlewy.toFixed(3)+";"+pradprawy.toFixed(3)+";"+napiecie.toFixed(3)+";"+pradserw.toFixed(3);
 		//console.log('getprady: '+dane);
 		io.emit('napiecie_i_prady',dane);
 	});
+	
+	socket.on('setAlarm', function(msg){
+		var tab= msg.split(";")
+		prog_pradu_silniki=tab[0];
+		if(prog_pradu_silniki>255)prog_pradu_silniki=255;
+		opoznienie_alar_prad=tab[1];
+		var data1= new Uint8Array(5);
+		data1[0]=0x20;
+		data1[1]=prog_pradu_silniki;
+		data1[2]=0x21;
+		data1[3]=opoznienie_alar_prad&0xFF;
+		data1[4]=(opoznienie_alar_prad>>8)&0xFF;
+		//console.log("prog:"+tab[0] +" opoz:"+tab[1] +" "+data1[3]+" "+data1[4]);
+		atmega.write(data1, function(err) {});
+		
+		io.emit('setAlarm',tab);
+	});
+	socket.on('nagrywac_exe', function(msg){
+			info_exe[0]=msg;
+
+		console.log(msg+" msg\n")
+	});
+	
+	socket.on('Init', function(msg){
+		var tab=serwo_barkLPdata+";"+
+				serwo_barkGD+";"+
+				serwo_lokiec+";"+
+				serwo_nadgarstek+";"+
+				serwo_szczeki+";"+ 
+				prog_pradu_silniki+";"+
+				opoznienie_alar_prad;
+		io.emit('Init',tab);
+	});
+
 	
 	socket.on('serwa', function(msg){
 		//console.log('serwa: '+msg);
@@ -329,6 +419,13 @@ io.on('connection', function(socket){
 		
 		var tab= msg.split(";")
 		var data= new Uint8Array(13);
+		if(tab[3]!=0 & tab[4]!=0 & tab[5]!=0 & tab[6]!=0 & tab[7]!=0 ){
+			serwo_barkLPdata=	tab[3];
+			serwo_barkGD=		tab[4];
+			serwo_lokiec=		tab[5];
+			serwo_nadgarstek=	tab[6];
+			serwo_szczeki=		tab[7];
+		}
 		//0x9F, ile serw, nr serwa,bajt1 danych, bajt2 danych
 		data[0]=tab[0];		data[1]=tab[1];		data[2]=tab[2]; 
 		data[3]=tab[3]&0x7F;  data[4]=(tab[3]>>7)&0x7F;
@@ -357,3 +454,93 @@ fs.watch("/home/pi/robot/nodeweb/fotki/", (eventType, filename) => {
 	}//czy jpg
   }	
  });
+ 
+ //pętla główna wywoływana co 200ms
+ function Update() {
+	 //prad silników
+	atmega.readBytes(0x11, 6, function(err, res) {
+		//console.log(err+' prad: '+res);
+		pradlewy= Number(res[1]) | Number(res[2])<<8;
+		//pradlewy= pradlewy*(375*(247/1024))/10000;
+		pradprawy=Number(res[3]) | Number(res[4])<<8;
+		//pradprawy=pradprawy*(375*(247/1024))/10000;
+	});
+	//napiecie
+	atmega.readBytes(0x12, 4, function(err, res) {
+		//console.log(err+' napiecie: '+Number(res[0])+' '+Number(res[1])+' '+Number(res[2])+' '+Number(res[3])+' '+Number(res[4]));
+		napiecie=Number(res[1]) | Number(res[2])<<8;
+		//napiecie=(napiecie*(247/1024)/10);//popraw
+	});
+	//prad serw
+	atmega.readBytes(0x13, 4, function(err, res) {
+		pradserw=Number(res[1]) | Number(res[2])<<8;	
+		//console.log(pradserw+ " "+ res[1] +" "+res[2]);
+	});
+	//info o systemie
+	atmega.readBytes(0x22, 3, function(err, res) {
+		info_o_atmedze=Number(res[1]);	
+	});
+	
+	//aktualizacja sterowania silnikami 
+	//jak przez 1s  nie zaktualizujemy silników to atmega wyłączy silniki
+	atmega.write(sterowanie_silnikami, function(err) {});
+	//pytamy program exe po gniazdach co tam u niego i wydajemy rozkazy
+	//trzeba wywoływać parę razy na sekundę
+	SocketWyslijAll(info_exe);
+ }
+ setInterval(Update,200);
+ 
+
+ 
+
+// Start a TCP Server
+var ServerSocket=net.createServer(function (socket) {
+
+  // Identify this client
+  socket.name = socket.remoteAddress + ":" + socket.remotePort 
+
+  // Put this new client in the list
+  clients_socket.push(socket);
+
+  // Send a nice welcome message and announce
+  socket.write("Welcome " + socket.name + "\n");
+  broadcast(socket.name + " joined the chat\n", socket);
+
+  // Handle incoming messages from clients.
+  socket.on('data', function (data) {
+	 io.emit('komunikacja',data.toString());
+    //broadcast(socket.name + "> " + data, socket);
+  });
+
+  // Remove the client from the list when it leaves
+  socket.on('end', function () {
+	clients_socket.splice(clients_socket.indexOf(socket), 1);
+    broadcast(socket.name + " left the chat.\n",socket);
+  });
+  
+}).listen(8085, function(){
+  console.log('nasuchuję na porcie:',ServerSocket.address().port);
+});
+ 
+ 
+ var Shutdown = function() {
+	console.log("wysłano kill signal.");
+	child_exe.kill();
+	child_js.kill();
+	server.close(function() {
+		console.log("Closed out remaining connections.");
+	});
+	process.exit();
+ };
+ 
+// listen for TERM signal .e.g. kill 
+process.on ('SIGTERM', Shutdown);
+// listen for INT signal e.g. Ctrl-C
+process.on ('SIGINT', Shutdown); 
+
+
+} catch (err) {
+	Shutdown();
+	console.log(err);
+	}
+

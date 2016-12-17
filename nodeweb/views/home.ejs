@@ -32,27 +32,30 @@
 			<h3>Ramie robota</h3>
 			<p>Bark lewo/prawo. </p>
 			<div class="form-group">
-				<input class="thumb-slider" id="barkLP" type="range" name="barkLP" min="600" max="2400" value="1740"> 
+				<input class="thumb-slider" id="barkLP" type="range" name="barkLP" min="600" max="2400"> 
 			</div>
 			<p>Bark góra/dół.</p>
 			<div class="form-group">
-				<input class="thumb-slider" id="barkGD" type="range" name="barkGD" min="800" max="2000" value="850"> 
+				<input class="thumb-slider" id="barkGD" type="range" name="barkGD" min="800" max="2000"> 
 			</div>
 			<p>Łokieć.</p>
 			<div class="form-group">
-				<input class="thumb-slider" id="lokiec" type="range" name="lokiec" min="900" max="2450" value="950"> 
+				<input class="thumb-slider" id="lokiec" type="range" name="lokiec" min="900" max="2450"> 
 			</div>
 			<p>Nadgarstek.</p>
 			<div class="form-group">
-				<input class="thumb-slider" id="nadgarstek" type="range" name="nadgarstek" min="400" max="2400" value="1680"> 
+				<input class="thumb-slider" id="nadgarstek" type="range" name="nadgarstek" min="400" max="2400"> 
 			</div>
 			<p>Szczęki.</p>
 			<div class="form-group">
-				<input class="thumb-slider" id="szczeki" type="range" name="szczeki" min="820" max="1800" value="900"> 
+				<input class="thumb-slider" id="szczeki" type="range" name="szczeki" min="820" max="1800"> 
 			</div>
 
 
-			<div id="test">0</div><input type="button" class="btn btn-success" id="stopserwa" value="Stop serwa" /><input type="button" class="btn btn-success" id="zaparkuj_serwa" value="Zaparkuj" />
+			<div id="test">0</div>
+			<p id="serwa_prady">Serwa prądy 0.0A</p>
+			<input type="button" class="btn btn-success" id="stopserwa" value="Stop serwa" />
+			<input type="button" class="btn btn-success" id="zaparkuj_serwa" value="Zaparkuj" />
 		</div>
 	</div>
 </div>
@@ -71,6 +74,7 @@
 				<img id="streamimage" class="xform" src="" height="300" width="300"/>
 				<canvas id="canvas-video" width="300" height="300"></canvas>
 				<p id="wykryto_ruch"></p>
+				<input type="checkbox" name="nagrywac_exe" id="nagrywac_exe" value="1" checked="checked" /> Wykrywaj ruch.
 			</p>
 		</div>
 	</div>
@@ -93,7 +97,7 @@
 		</div>
 	</div>
 </div>
-<!-- KAFEL temperatury =============================================================== -->
+<!-- KAFEL info =============================================================== -->
 <div class="col-sm-12 col-md-4">
 	<div class="thumbnail text-center green-thumb">
 		<div class="caption green-caption">
@@ -105,10 +109,30 @@
 			<div class="form-group">
 				<p id="napiecie">0V</p> 
 			</div>
+			<h3>Os info</h3>
+			<div class="form-group">
+				<p id="os_info0">os info</p> 
+				<p id="os_info1">os info</p> 
+				<p id="os_info2">os info</p> 
+				<p id="os_info3">os info</p> 
+				<p id="komunikacja">os info</p> 
+			</div>
+
 		</div>
 	</div>
 </div>
-
+<!-- KAFEL ustawienia =============================================================== -->
+<div class="col-sm-12 col-md-4">
+	<div class="thumbnail text-center green-thumb">
+		<div class="caption green-caption">
+			<h3>ustawienia</h3>
+			<div class="form-group">
+				Próg prądu:<input type="text" class="btn btn-success" id="prog_pradu" value="80"/>
+				<br/>Opóźnienie wyłączenia:<input type="text" class="btn btn-success" id="opoznienie" value="1200"/>
+			</div>
+		</div>
+	</div>
+</div>
 <% } %>
 
 <% if (user) { %>

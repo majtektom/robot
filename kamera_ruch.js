@@ -23,7 +23,8 @@ var server = http.createServer(app);
 server.listen(app.get('port'), function () {
   console.log('HTTP server listening on port ' + app.get('port'));
 });
-
+// WebSocket server
+var io = require('socket.io')(server);
 // face detection properties
 var rectColor = [255, 0, 0];
 var rectThickness = 5;
@@ -46,8 +47,7 @@ var BLUE  = [0, 255, 0]; // B, G, R
 var RED   = [0, 0, 255]; // B, G, R
 var GREEN = [0, 255, 0]; // B, G, R
 var WHITE = [255, 255, 255]; // B, G, R
-// WebSocket server
-var io = require('socket.io')(server);
+
 var path='/tmp/out/';
 var tmp=0;
 //czy katalog istnieje
