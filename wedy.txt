@@ -1,4 +1,4 @@
-﻿wycieki w opencv dla node
+﻿dgdrg wycieki w opencv dla node
 SOLVED: nano /etc/crontab and add line:
 * * * * * root sync; sync; sync; echo 3 >/proc/sys/vm/drop_caches;
 It isn't beautiful, but it works.
