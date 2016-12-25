@@ -70,7 +70,7 @@ socket1.on('serwa', function(msg){
 		
 	});
 socket1.on('komunikacja', function(msg){
-		$("#komunikacja").text(msg.toString());
+		$("#komunikacja").text("Z analizy obrazu: "+msg.toString());
 });
 socket1.on('Init', function(msg){
 		var tab= msg.split(";");
@@ -81,6 +81,13 @@ socket1.on('Init', function(msg){
 		$('#szczeki').val(tab[4]/4); 
 		$('#prog_pradu').val(tab[5]);
 		$('#opoznienie').val(tab[6]);
+		//dane z programu exe
+		if(tab[7]==1)//tryb pracy wykrywania obrazu
+			$('#nagrywac_exe').attr('checked',true)
+		else
+			$('#nagrywac_exe').attr('checked',false)
+		tab[8];tab[9];tab[10];tab[11];
+		
 	});
 
 socket1.on('wykryto_ruch', function(msg){
@@ -99,7 +106,7 @@ function updateUI() {
 
 //$(document).ready(function(){
 $(function(){
-	setInterval(updateUI,500);
+	setInterval(updateUI,200);
 	$("#streamimage").attr("src","http://"+location.hostname+":8090/?action=stream");
 	//inicjacja zmiennych
 	socket1.emit('Init', 0);

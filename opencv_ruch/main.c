@@ -139,15 +139,12 @@ void sendData( int sockfd, char* buf,int size ) {
 
 int getData( int sockfd ) {
   int n;
-
-
   if ( (n = recv(sockfd,Socket_buffer,Socket_buf_size-1,0) ) < 0 )
       ;// printf( const_cast<char *>( "ERROR reading from socket") );
- // buffer[0]='a'; buffer[1]='l'; buffer[2]='a'; 
   Socket_buffer[n] = '\0';
-  //printf("%s\n", Socket_buffer );
+  
   if(n>0) {
-	  
+	 // printf("%d\n", Socket_buffer[0] );
 	  if(Socket_buffer[0]=='1') Nagrywaj=1;
 	  if(Socket_buffer[0]=='2') Nagrywaj=0;
 	  
@@ -156,7 +153,7 @@ int getData( int sockfd ) {
 }
 
 //wykrywaj----------------------------------------------------------------------
-void Wykrywaj(const char* filename){
+void Wykrywaj_ruch(const char* filename){
 	string s=filename;
 	string st="/tmp/"+s;
 	bool wykryto=0;
@@ -191,17 +188,19 @@ void Wykrywaj(const char* filename){
 		IplImage* ccc =  cvCloneImage(img);//cvCreateImage( imgSize, IPL_DEPTH_8U, 3); 
 		//bluring the differnece image
         cvSmooth(img, img, CV_BLUR); 
-		cvAbsDiff(img, img_old, diff);  // diff = img  - img_old
+		cvAbsDiff(img_old,img , diff);  // diff = img  - img_old
+		IplImage* roznica =  cvCloneImage(diff);
 		//bluring the differnece imag
         cvSmooth(diff, diff, CV_BLUR);             
         //progowanie na obrazie
         cvThreshold(diff, diff, 25, 255, CV_THRESH_BINARY);
-		//dzięki erozji i dylatacji pozbywamy się małych odszarów im większa erozja i dylatacja tym większe obszary będą znikały
-		cvErode(diff, diff,element,1);//erozja
-		cvDilate(diff, diff,element,1);//dylatacja
+		
 		
 		IplImage* diff1 = cvCreateImage( imgSize, IPL_DEPTH_8U, 1); //cvCloneImage(img);
 		cvCvtColor(diff,diff1,CV_RGB2GRAY);
+		//dzięki erozji i dylatacji pozbywamy się małych odszarów im większa erozja i dylatacja tym większe obszary będą znikały
+		cvErode(diff1, diff1,element,1);//erozja
+		cvDilate(diff1, diff1,element,1);//dylatacja
 		//find contours
 		cvFindContours( diff1, storage, &contours );//, CV_RETR_LIST, CV_CHAIN_APPROX_NONE );
 		
@@ -246,13 +245,15 @@ void Wykrywaj(const char* filename){
 		if(Nagrywaj==1)
 			cvSaveImage(out.c_str(), ccc);//diff 
 		else
-			cvSaveImage(out.c_str(), diff);// 
+			cvSaveImage(out.c_str(),roznica );// diff
+		
 		if(wykryto==1 && za_duzy==0 && ile_obszarow<10 && Nagrywaj==1){//
 			//printf("wykryto ruch");
 			string out1="/home/pi/robot/nodeweb/fotki/"+s;
 			cvSaveImage(out1.c_str(), ccc);
 		}
 		cvReleaseImage( &diff1 );
+		cvReleaseImage( &roznica );
 		cvReleaseImage( &diff );
 		cvReleaseImage( &ccc );
 	}
@@ -407,6 +408,7 @@ int main( )
     // Continue until run == false. See signal and sig_callback above.
     while ( run ) {
 		//test++;
+		fflush(stdout); 
 		//printf("%d",test++);
 		//select( sockfd+1, &watch_set1, NULL, NULL, NULL );
 		Update_socket();
@@ -463,7 +465,7 @@ int main( )
 							//wykrywamy ruch gdy plik ma rozszerzenie jpg
 							if(file==string("jpg")) { 
 								//printf( "wykrywam %s/%s\n",current_dir.c_str(),event->name);
-								Wykrywaj(event->name);
+								Wykrywaj_ruch(event->name);
 								}	
 						}
 					}

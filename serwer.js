@@ -1,93 +1,50 @@
-var wire=require('./1wire');
 var express = require('express');
-var app=express();
-var session = require('express-session');
 var body_parser=require('body-parser');
-var passport = require('passport');
-var Strategy = require('passport-local').Strategy;
-var passportSocketIo = require('passport.socketio');
-//var cookie = require("cookie");
 var cookieParser = require('cookie-parser');
+var session = require('express-session');
+var crypto = require('crypto')
+//var passport = require('passport');
+//var Strategy = require('passport-local').Strategy;
+//var passportSocketIo = require('passport.socketio');
+//var cookie = require("cookie");
+var app=express();
 //connect = require('connect');
-var db = require('./nodeweb/db');
+
 var http = require('http').Server(app);
 var url = require('url');
 //var url_parts = url.parse(request.url, true);
 //var query = url_parts.query;
 const io = require('socket.io')(http);
-var i2c = require('i2c');
+
 const os = require('os');
 const child_process = require('child_process');
 
 var fs = require("fs");//operacje na plikach
 
-var socketioRedis = require("passport-socketio-redis");
-var redis = require("redis").createClient();
-var RedisStore = require('connect-redis')(session);
+//var socketioRedis = require("passport-socketio-redis");
+//var redis = require("redis").createClient();
+//var RedisStore = require('connect-redis')(session);
 //var RedisUrl = require('redisurl');
 
-var address = 0x10;//adres atmegi na lini i2c
-var atmega = new i2c(address, {device: '/dev/i2c-1'}); 
 
-var SerialPort = require("serialport");
-// Load the TCP Library
-const net = require('net');
-var port = new SerialPort("/dev/ttyAMA0", {
-  baudRate: 115200
-}); 
+//var db = require('./db');
+var wire=require('./1wire');
+const atmega = require('./atmega');
+const serwa = require('./serwa');
+const app_exe = require('./app_exe');
 
-var pradlewy=0;
-var pradprawy=0;
-var napiecie=0;
-var pradserw=0;
-var serwo_barkLPdata=1740*4;
-var serwo_barkGD=850*4;
-var serwo_lokiec=950*4;
-var serwo_nadgarstek=1680*4;; 
-var serwo_szczeki=900*4;  
+
 var prog_pradu_silniki=80;
 var opoznienie_alar_prad=1200;
-var sterowanie_silnikami=[0x10,0,0,0];
+var sterowanie_silnikami=[0x10,0,0,0]; 
 var wykryto_ruch=0;
-var info_o_atmedze=0;
-var info_exe= new Uint8Array(5);
-// Keep track of the chat clients
-var clients_socket = [];
-try {
-	info_exe[0]=1;
-// Send a message to all clients
-function broadcast(message, sender) {
-    clients_socket.forEach(function (client) {
-      // Don't want to send it to sender
-      if (client === sender) return;
-      client.write(message);
-    });
-   // process.stdout.write(message)// Log it to the server output too
-}
-function SocketWyslijAll(message) {
-    clients_socket.forEach(function (client) {
-      client.write(message.toString());
-    });
-   // process.stdout.write(message)// Log it to the server output too
-}
 
+var info_exe= new Uint8Array(5); 
+var bezwladnosc=0;
+info_exe[0]=1;
+app_exe.AppExe.SetSocketIO(io);
 
 var process_options= { 
-		env: {user:'pi'},
-		detached: false,
-		stdio: ['pipe','pipe','pipe']
-};
-var child_exe=child_process.spawn("/home/pi/robot/opencv_ruch/wykryj",['-parametr','par2'],process_options);
-
-child_exe.stdout.on('data',function(data){ 
-	
-	console.log("wynik z exe "+data);
-});
-child_exe.stderr.on('data',function(data){ console.log("exe bład "+data.toString());});
-child_exe.on('exit',function(code){		console.log("proces zakończony z kodem: "+code);	});
-
-
-process_options= { 
 		env: {user:'pi'},
 		encoding:'utf8'
 };
@@ -98,41 +55,6 @@ child_js.on('message',function(message){
 });
 //wysyłanie do wątku
 //child_js.send({cld:command}); 
-
-// Configure the local strategy for use by Passport.
-//
-// Strategia lokalna wymaga `verify` funkcję, która odbiera dane uwierzytelniające (` username` i `password`) przedstawione przez użytkownika.
-// Funkcja musi sprawdzić, czy hasło jest poprawne, a następnie wywołać `cb` z obiektu użytkownika, 
-//który zostanie ustawiony na` req.user` się obsługą tras po uwierzytelnieniu.
-passport.use(new Strategy(
-  function(username, password, cb) {
-    db.users.findByUsername(username, function(err, user) {
-      if (err) { return cb(err); }
-      if (!user) { return cb(null, false); }
-      if (user.password != password) { return cb(null, false); }
-      return cb(null, user);
-    });
-  }));
-
-
-// Configure Passport authenticated session persistence.
-//
-// W celu przywrócenia stanu uwierzytelniania całej żądań HTTP, 
-//Paszport musi serializacji użytkowników do i użytkowników deserializowania z sesji.
-// Typowa implementacja jest to tak proste, jak dostarczanie identyfikator użytkownika
-// podczas szeregowania i odpytywania rekordu przez ID użytkownika z bazy danych przy deserializacji.
-passport.serializeUser(function(user, cb) {
-  cb(null, user.id);
-});
-
-passport.deserializeUser(function(id, cb) {
-  db.users.findById(id, function (err, user) {
-    if (err) { return cb(err); }
-    cb(null, user);
-  });
-});
-
-
 
 // Configure view engine to render EJS templates. pug - inny silnik
 app.set('views', __dirname + '/nodeweb/views');
@@ -147,172 +69,36 @@ app.use(express.static(__dirname+'/nodeweb/'))
 // Use application-level middleware for common functionality, including
 // logging, parsing, and session handling.
 //app.use(require('morgan')('combined'));
-app.use(cookieParser());
-app.use(body_parser.urlencoded({ extended: true }));
-app.use(session({ 
-	secret: 'keyboard cat', 
-	resave: false, 
-	store:       sessionStore,
-	saveUninitialized: false }));
-// Sets up a session store with Redis
-//var sessionStore = new RedisStore({ client: RedisUrl.connect(process.env.REDIS_URL) });
-var sessionStore = new RedisStore({   host: 'localhost',   port: 6379, client: redis});
-// app.use(session({
-  // key: 'connect.sid',
-  // secret: 'keyboard cat',
-  // store: sessionStore,
-  // resave: false, saveUninitialized: false 
-// }));
-//zabezpieczenia socketów
-// io.use(socketioRedis.authorize({
-    // passport:passport,
-    // cookieParser: cookieParser,
-    // secret:      'keyboard cat',    
-    // store:       sessionStore,
-    // success:     authorizeSuccess,  
-    // fail:        authorizeFail     
-// }));
-
-function authorizeSuccess(data, accept)
-{
-    console.log('Authorized success');
-    accept();
-}
-
-function authorizeFail(data, message, error, accept)
-{
-    if(error)
-        accept(new Error(message));
-}
-
-
-// Initialize Passport and restore authentication state, if any, from the
-// session.
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(cookieParser('magicString'));
+app.use(session({
+  secret: 'tajne-poufne',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}))
 
 
 var server=http.listen(8080, function(){
   console.log('nasuchuję na porcie:',server.address().port);
 });
-// Define routes ----------------------------------------------------------------------------------
-app.get('/',
-  function(req, res) {
-	require('connect-ensure-login').ensureLoggedIn(),
-    res.render('home', {
-		user: req.user,
-		url: req.url
-		});
-  });
- 
-//app.get('/', function(req, res){
-//  res.sendFile(__dirname + '/nodeweb/index.html');
-//});
-
-app.get('/login',
-  function(req, res){
-    res.render('home', { user: req.user,url: req.url });
-  });
-  
-app.post('/login', 
-  passport.authenticate('local', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  });
-  
-app.get('/logout',
-  function(req, res){
-    req.logout();
-    res.redirect('/');
-  });
-
-app.get('/profile',
-  require('connect-ensure-login').ensureLoggedIn(),
-  function(req, res){
-    res.render('profile', { 
-		user: req.user,
-		url: req.url
-		});
-  });
-  
-app.get('/foty',
-   require('connect-ensure-login').ensureLoggedIn(),
-  function(req, res){
-	  var url_parts =url.parse(req.url,true);
-	  var url1= req.url.split("?")
-	  var query=url_parts.query;
-	  if(!query.strona)query.strona=1;
-	  if(query.del){
-		  //usuwamy pliki
-		  if(query.del=="ALL"){//usuwamy wszystkie
-			  fs.readdir("/home/pi/robot/nodeweb/fotki",function(err, files){
-			   if (err) {
-				  return console.error(err);
-			   } 
-			    if (files.length > 0)
-				for (var i = 0; i < files.length; i++) {
-				  var filePath = "/home/pi/robot/nodeweb/fotki" + '/' + files[i];
-				  if (fs.statSync(filePath).isFile())
-					fs.unlinkSync(filePath);
-				}
-			  });
-		  }else
-			  fs.unlinkSync("/home/pi/robot/nodeweb/fotki/"+query.del);
-			  
-	  }
-	 // console.log(req.url);
-	 // console.log("query ",query);
-	 //lista plików do wyświetlenia
-	 fs.readdir("/home/pi/robot/nodeweb/fotki",function(err, files){
-	   if (err) {
-		  return console.error(err);
-	   } 
-		
-		var ile=21;//21 obrazów na strone
-		var ile_all=files.length;
-		var start=(query.strona-1)*ile;
-		var end=ile+start;
-		var stron=Math.floor(ile_all/ile)+1;
-		if(end > ile_all) end =ile_all;
-		
-		res.render('foty', { 
-		user: req.user,
-		list_foto: files,	
-		ile_start: start,
-		ile_end: end,
-		strona: query.strona,
-		stron: stron,
-		ile_all: ile_all,
-		url: url1[0]
-		});
+function Shutdown(){
+	console.log("wysłano kill signal.");
+	app_exe.AppExe.KillApp();
+	child_js.kill();
+	server.close(function() {
+		console.log("Closed out remaining connections.");
 	});
-
-  }); 
-
-
-
-//uart
-port.on('open', function() {
-  // port.write("test", function(err) {
-  // if (err) { return console.log('Error on write: ', err.message); }
-  // });
-});
-
-port.on('error', function(err) {
-  console.log('Error uart: ', err.message);
-})
-
-port.on('data', function(data) {
-  //console.log('data uart: ', data);
-})
-
-//io.on('connection', require('./kamera_ruch'));
+	process.exit();
+ }
+ 
+try {
+var routes = require('./routes')(app); 
 
 io.on('connection', function(socket){
-	console.log('user connected:'+socket);
+	;//console.log('user connected:'+socket);
 	
 	socket.on('disconnect', function(){
-		console.log('user disconnected');
+		;//console.log('user disconnected');
 	});
 	socket.on('error', function(reason){
 		console.log('socket error: '+reason);
@@ -320,9 +106,8 @@ io.on('connection', function(socket){
   
 	socket.on('gettemperature', function(msg){
 		//console.log('gettemperature: '+msg);
-		t1=wire.GetTempe1();
-		t2=wire.GetTempe2();
-
+		t1=wire.Termometr.GetTempe1();
+		t2=wire.Termometr.GetTempe2();
 		io.emit('temperatura1',t1);
 		io.emit('temperatura2',t2);
 		//console.log('temparatury: T1: '+t1+'°C T2:'+t1+'°C')
@@ -332,7 +117,7 @@ io.on('connection', function(socket){
 		console.log('restart: '+msg);
 		var tab= msg.split(";")
 		//dopisz resetowanie systemu i atmegi
-		atmega.write(tab, function(err) {});
+		atmega.atmega.Write(tab);
 		io.emit('restart','restart');
 	});
 	
@@ -348,14 +133,14 @@ io.on('connection', function(socket){
 	socket.on('os_info', function(msg){
 		//console.log('silniki: '+msg);
 		var tab=os.uptime()+";"+os.loadavg()+";"+os.freemem();//JSON.stringify(os.cpus())
-		tab+=";"+info_o_atmedze;
+		tab+=";"+atmega.atmega.GetInfo().info;
 		io.emit('os_info',tab);
 	});
 	
 	socket.on('getprady', function(msg){
 		//console.log('getprady: '+msg);
-		
-		var dane=pradlewy.toFixed(3)+";"+pradprawy.toFixed(3)+";"+napiecie.toFixed(3)+";"+pradserw.toFixed(3);
+		var info=atmega.atmega.GetInfo();
+		var dane=info.pradlewy.toFixed(3)+";"+info.pradprawy.toFixed(3)+";"+info.napiecie.toFixed(3)+";"+info.pradserw.toFixed(3);
 		//console.log('getprady: '+dane);
 		io.emit('napiecie_i_prady',dane);
 	});
@@ -372,69 +157,31 @@ io.on('connection', function(socket){
 		data1[3]=opoznienie_alar_prad&0xFF;
 		data1[4]=(opoznienie_alar_prad>>8)&0xFF;
 		//console.log("prog:"+tab[0] +" opoz:"+tab[1] +" "+data1[3]+" "+data1[4]);
-		atmega.write(data1, function(err) {});
+		atmega.atmega.Write(data1);
 		
 		io.emit('setAlarm',tab);
 	});
 	socket.on('nagrywac_exe', function(msg){
 			info_exe[0]=msg;
-
-		console.log(msg+" msg\n")
 	});
 	
 	socket.on('Init', function(msg){
-		var tab=serwo_barkLPdata+";"+
-				serwo_barkGD+";"+
-				serwo_lokiec+";"+
-				serwo_nadgarstek+";"+
-				serwo_szczeki+";"+ 
+		var ss=serwa.serwa.GetInfo();
+		var tab=ss.barkLP+";"+
+				ss.barkGD+";"+
+				ss.lokiec+";"+
+				ss.nadgarstek+";"+
+				ss.szczeki+";"+ 
 				prog_pradu_silniki+";"+
-				opoznienie_alar_prad;
+				opoznienie_alar_prad+";"+
+				info_exe[0]+";"+info_exe[1]+";"+info_exe[2]+";"+info_exe[3]+";"+info_exe[4];
 		io.emit('Init',tab);
 	});
 
 	
 	socket.on('serwa', function(msg){
 		//console.log('serwa: '+msg);
-		
-		var data1= new Uint8Array(6);
-		//spowalniamy serwa z zadaną prędkością będzie dążyć do zadanego położenia
-		//0x7F, nr serwa,bajt/2 danych, bajt/2 danych
-		data1[0]=135;	data1[1]=0;		
-		data1[2]=5; 	data1[3]=0;  	
-		port.write(data1);
-						data1[1]=1;		
-		data1[2]=5; 	 	
-		port.write(data1);
-						data1[1]=2;		
-		data1[2]=5; 	 	
-		port.write(data1);
-						data1[1]=3;		
-		data1[2]=5; 	 	
-		port.write(data1);
-						data1[1]=4;		
-		data1[2]=5; 	 	
-		port.write(data1);
-
-		
-		var tab= msg.split(";")
-		var data= new Uint8Array(13);
-		if(tab[3]!=0 & tab[4]!=0 & tab[5]!=0 & tab[6]!=0 & tab[7]!=0 ){
-			serwo_barkLPdata=	tab[3];
-			serwo_barkGD=		tab[4];
-			serwo_lokiec=		tab[5];
-			serwo_nadgarstek=	tab[6];
-			serwo_szczeki=		tab[7];
-		}
-		//0x9F, ile serw, nr serwa,bajt1 danych, bajt2 danych
-		data[0]=tab[0];		data[1]=tab[1];		data[2]=tab[2]; 
-		data[3]=tab[3]&0x7F;  data[4]=(tab[3]>>7)&0x7F;
-		data[5]=tab[4]&0x7F;  data[6]=(tab[4]>>7)&0x7F;
-		data[7]=tab[5]&0x7F;  data[8]=(tab[5]>>7)&0x7F;;
-		data[9]=tab[6]&0x7F;  data[10]=(tab[6]>>7)&0x7F;
-		data[11]=tab[7]&0x7F; data[12]=(tab[7]>>7)&0x7F;
-		//console.log('serwa: '+data);
-		port.write(data);
+		serwa.serwa.Write(msg);
 		io.emit('serwa',msg);
 	});
 	
@@ -455,83 +202,32 @@ fs.watch("/home/pi/robot/nodeweb/fotki/", (eventType, filename) => {
   }	
  });
  
- //pętla główna wywoływana co 200ms
+ //pętla główna wywoływana co 100ms
  function Update() {
-	 //prad silników
-	atmega.readBytes(0x11, 6, function(err, res) {
-		//console.log(err+' prad: '+res);
-		pradlewy= Number(res[1]) | Number(res[2])<<8;
-		//pradlewy= pradlewy*(375*(247/1024))/10000;
-		pradprawy=Number(res[3]) | Number(res[4])<<8;
-		//pradprawy=pradprawy*(375*(247/1024))/10000;
-	});
-	//napiecie
-	atmega.readBytes(0x12, 4, function(err, res) {
-		//console.log(err+' napiecie: '+Number(res[0])+' '+Number(res[1])+' '+Number(res[2])+' '+Number(res[3])+' '+Number(res[4]));
-		napiecie=Number(res[1]) | Number(res[2])<<8;
-		//napiecie=(napiecie*(247/1024)/10);//popraw
-	});
-	//prad serw
-	atmega.readBytes(0x13, 4, function(err, res) {
-		pradserw=Number(res[1]) | Number(res[2])<<8;	
-		//console.log(pradserw+ " "+ res[1] +" "+res[2]);
-	});
-	//info o systemie
-	atmega.readBytes(0x22, 3, function(err, res) {
-		info_o_atmedze=Number(res[1]);	
-	});
+	 atmega.atmega.UpdateInfo();
 	
 	//aktualizacja sterowania silnikami 
 	//jak przez 1s  nie zaktualizujemy silników to atmega wyłączy silniki
-	atmega.write(sterowanie_silnikami, function(err) {});
+	atmega.atmega.Write(sterowanie_silnikami);
 	//pytamy program exe po gniazdach co tam u niego i wydajemy rozkazy
-	//trzeba wywoływać parę razy na sekundę
-	SocketWyslijAll(info_exe);
+	//trzeba wywoływać parę razy na sekundę inaczej zatrzyma się wykrywanie
+	var buf= new Uint8Array(5); 
+	buf[0]=info_exe[0];buf[1]=info_exe[1];buf[2]=info_exe[2];buf[3]=info_exe[3];buf[4]=info_exe[4];
+	if(serwa.serwa.IsEnable()!=0 || sterowanie_silnikami[2]!=0 || sterowanie_silnikami[3]!=0){
+		buf[0]=2;//gdy chodzą silniki albo serwa wyłącz wykrywanie ruchu
+		bezwladnosc=7;
+	}else{
+		//SocketWyslijAll(info_exe);
+		if(bezwladnosc<0) //małe opużnienie na bezwładność
+			;
+		else {
+		bezwladnosc--;
+		buf[0]=2;//gdy chodzą silniki albo serwa wyłącz wykrywanie ruchu
+		}
+	}
+	app_exe.AppExe.WyslijAll(buf);
  }
- setInterval(Update,200);
- 
-
- 
-
-// Start a TCP Server
-var ServerSocket=net.createServer(function (socket) {
-
-  // Identify this client
-  socket.name = socket.remoteAddress + ":" + socket.remotePort 
-
-  // Put this new client in the list
-  clients_socket.push(socket);
-
-  // Send a nice welcome message and announce
-  socket.write("Welcome " + socket.name + "\n");
-  broadcast(socket.name + " joined the chat\n", socket);
-
-  // Handle incoming messages from clients.
-  socket.on('data', function (data) {
-	 io.emit('komunikacja',data.toString());
-    //broadcast(socket.name + "> " + data, socket);
-  });
-
-  // Remove the client from the list when it leaves
-  socket.on('end', function () {
-	clients_socket.splice(clients_socket.indexOf(socket), 1);
-    broadcast(socket.name + " left the chat.\n",socket);
-  });
-  
-}).listen(8085, function(){
-  console.log('nasuchuję na porcie:',ServerSocket.address().port);
-});
- 
- 
- var Shutdown = function() {
-	console.log("wysłano kill signal.");
-	child_exe.kill();
-	child_js.kill();
-	server.close(function() {
-		console.log("Closed out remaining connections.");
-	});
-	process.exit();
- };
+ setInterval(Update,100);
  
 // listen for TERM signal .e.g. kill 
 process.on ('SIGTERM', Shutdown);
@@ -540,7 +236,8 @@ process.on ('SIGINT', Shutdown);
 
 
 } catch (err) {
-	Shutdown();
+	
 	console.log(err);
+	Shutdown();
 	}
 

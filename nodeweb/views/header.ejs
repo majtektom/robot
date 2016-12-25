@@ -42,7 +42,7 @@
 			<a class="navbar-brand" href="/"><span class="glyphicon glyphicon-home" aria-hidden="true"></span> Sterowanie robotem</a>
 			<% if (user) { %>
 			<input type="button" class="btn btn-success" id="restart" value="restart" />
-			<span class="icon-bar">Witaj <%= user.username %>. <a href="/profile">Twój profil</a>. <a href="/logout"  class="btn btn-success">Wyloguj</a></span>
+			<span class="icon-bar">Witaj <%= user.name %>. <a href="/profile">Twój profil</a>. <a href="/logout"  class="btn btn-success">Wyloguj</a></span>
 			<span class="icon-bar" id="ping">Ping</span>
 			<% } %>	
 		</div>
