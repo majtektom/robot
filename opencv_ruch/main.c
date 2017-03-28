@@ -1,4 +1,4 @@
-// compiled with: g++ circles.cpp -o circles `pkg-config --cflags --libs opencv`
+// compiled with: g++ main.c -o wykryj `pkg-config --cflags --libs opencv`
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -249,6 +249,9 @@ void Wykrywaj_ruch(const char* filename){
 		
 		if(wykryto==1 && za_duzy==0 && ile_obszarow<10 && Nagrywaj==1){//
 			//printf("wykryto ruch");
+			char wyslij[2];
+			wyslij[0]=1;//flaga ze wykryto ruch
+			sendData( sockfd, wyslij,3 );
 			string out1="/home/pi/robot/nodeweb/fotki/"+s;
 			cvSaveImage(out1.c_str(), ccc);
 		}
@@ -309,7 +312,7 @@ void Wykrywaj_ruch(const char* filename){
 void Update_socket(){
 
 	int n=getData( sockfd );
-	sendData( sockfd, Socket_buffer,n );
+	//sendData( sockfd, Socket_buffer,n );
 	
 }
 //---------------------------------------
