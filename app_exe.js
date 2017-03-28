@@ -3,8 +3,10 @@ const net = require('net');
 
 const child_process = require('child_process');
 
+
 function CAppExe()
 {
+	var _this = this;
 	var clients_socket = [];
 	var socketio=null;//wskaznik do socket.io musimy go ustawic zanim będziemy mogli korzystać
 	var process_options= { 
@@ -13,7 +15,7 @@ function CAppExe()
 			stdio: ['pipe','pipe','pipe']
 	};
 	var child_exe=child_process.spawn("/home/pi/robot/opencv_ruch/wykryj",['-parametr','par2'],process_options);
-
+	var wykryto_ruch=0;
 	child_exe.stdout.on('data',function(data){ 
 		
 		console.log("wynik z exe "+data);
@@ -42,6 +44,9 @@ function CAppExe()
 		});
 	   // process.stdout.write(message)// Log it to the server output too
 	}
+	this.GetWykrytoRuch =function () {
+		return wykryto_ruch;
+	}
 	// Start a TCP Server
 	var ServerSocket=net.createServer(function (socket) {
 
@@ -53,8 +58,9 @@ function CAppExe()
 
 		// Handle incoming messages from clients.
 		socket.on('data', function (data) {
-		 socketio.emit('komunikacja',data.toString());
-		//broadcast(socket.name + "> " + data, socket);
+			if(data[0]==1) wykryto_ruch++;
+			//console.log("wykryto1 "+wykryto_ruch.toString());
+			 socketio.emit('komunikacja_exe',data);//wysyłanie wiadomości na front
 		});
 
 		// Remove the client from the list when it leaves

@@ -3,84 +3,94 @@ var fs = require("fs");//operacje na plikach
 var body_parser=require('body-parser');
 var cookieParser = require('cookie-parser');
 var session = require('express-session');
-var crypto = require('crypto')
+
+var db = require('./db');
 
 module.exports = function(app) {
-function hashPW(pwd){
-	return crypto.createHash('sha256').update(pwd).digest('base64').toString();
-}
+
 
 function autoryzacja(req,res,next){
 	//console.log(req.url)
 	if(req.url!= "/login"){
 		if(req.session.user){
-			
+			next();
 		}else{
 			req.session.error="brak dostępu";
 			res.redirect('/login');
 		}
-	}
-	next();
+	}else next();
+	
 } 
+app.use(cookieParser('magicString'));
+app.use(session({
+  secret: 'tajne-poufne',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}))
+
 app.use(autoryzacja);
 app.use(body_parser.json()); // support json encoded bodies
 app.use(body_parser.urlencoded({ extended: true })); // support encoded bodies
+//trasy
+app.get('/',home )
+app.post('/login',loginpost) 
+app.get('/login',login)
+app.get('/logout',logout)
+app.get('/profile',profile)
+app.get('/foty',foty)
 
-app.get('/',
-  function(req, res) {
+//funkcje tras
+function home(req, res) {
     res.render('home', {
-		user: req.session.user,
-		url: req.url
+		url: req.url,
+		session: req.session
 		});
-  });
+}
 
-app.post('/login', 
-  //passport.authenticate('local', { failureRedirect: '/' }),
-  function(req, res) {
-	var user={name:'tomtom'/*req.body.username*/, password:hashPW("2222")};
-	//console.log(req);
-	if(user.password === hashPW(req.body.password.toString())){
-		req.session.regenerate(function(){
-			req.session.user=user;
-			req.session.success='uf, udało się :)';
-			res.redirect('/');			
-		});
-	}else{
-		req.session.regenerate(function(){
-			req.session.error='oj, nieudało się :)';
-			res.redirect('/login');			
-		});
-	}	
-  });
+function loginpost(req, res) {
+	db.users.findByUsername(req.body.username,  function(err, user) {
+        if (err || !user ) { 
+			req.session.regenerate(function(){
+				req.session.error='oj, nie udało się :)';
+				res.redirect('/login');
+			})
+		}else
+		if (user.password === db.users.hashPW(req.body.password.toString())) { 
+			   req.session.regenerate(function(){
+					req.session.user=user;
+					req.session.success='uf, udało się :)';
+					res.redirect('/');			
+				});
+		}else{
+				req.session.regenerate(function(){
+					req.session.error='oj, nie udało się, błędne hasło:)';
+					res.redirect('/login');			
+				});   
+		   }
+     });
+}
 
-app.get('/login',
-  function(req, res){
-    res.render('home', { user: req.session.user,url: req.url });
-  });
-  
-app.get('/logout',
-  function(req, res){
-    //req.logout();
+function login(req, res){
+    res.render('home', { user: req.session.user,url: req.url ,session: req.session});
+}
+
+function logout(req, res){
 	req.session.destroy(function(){
 		res.redirect('/login');
 	})
-  });
+}  
 
-app.get('/profile',
-  //require('connect-ensure-login').ensureLoggedIn(),
-  function(req, res){
-	  
+function profile(req, res){
     res.render('profile', { 
-		user: req.session.user,
-		url: req.url
+		url: req.url,
+		session: req.session
 		});
-  });
+}
   
-app.get('/foty',
-   //require('connect-ensure-login').ensureLoggedIn(),
-  function(req, res){
+function foty(req, res){
 	  var url_parts =url.parse(req.url,true);
-	  var url1= req.url.split("?")
+	 // var url1= req.url.split("?")
 	  var query=url_parts.query;
 	  if(!query.strona)query.strona=1;
 	  if(query.del){
@@ -117,17 +127,17 @@ app.get('/foty',
 		if(end > ile_all) end =ile_all;
 		
 		res.render('foty', { 
-		user: req.session.user,
-		list_foto: files,	
-		ile_start: start,
-		ile_end: end,
-		strona: query.strona,
-		stron: stron,
-		ile_all: ile_all,
-		url: url1[0]
-		});
+			session: req.session,
+			list_foto: files,	
+			ile_start: start,
+			ile_end: end,
+			strona: query.strona,
+			stron: stron,
+			ile_all: ile_all,
+			url: req.url
+			});
 	});
 
-  }); 
+  } 
   
 }

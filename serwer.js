@@ -1,33 +1,11 @@
 var express = require('express');
-var body_parser=require('body-parser');
-var cookieParser = require('cookie-parser');
-var session = require('express-session');
-var crypto = require('crypto')
-//var passport = require('passport');
-//var Strategy = require('passport-local').Strategy;
-//var passportSocketIo = require('passport.socketio');
-//var cookie = require("cookie");
 var app=express();
-//connect = require('connect');
-
 var http = require('http').Server(app);
 var url = require('url');
-//var url_parts = url.parse(request.url, true);
-//var query = url_parts.query;
 const io = require('socket.io')(http);
-
 const os = require('os');
 const child_process = require('child_process');
 
-var fs = require("fs");//operacje na plikach
-
-//var socketioRedis = require("passport-socketio-redis");
-//var redis = require("redis").createClient();
-//var RedisStore = require('connect-redis')(session);
-//var RedisUrl = require('redisurl');
-
-
-//var db = require('./db');
 var wire=require('./1wire');
 const atmega = require('./atmega');
 const serwa = require('./serwa');
@@ -50,8 +28,8 @@ var process_options= {
 };
 var child_js=child_process.fork("/home/pi/robot/kamera_ruch.js",['-parametr','par2'],process_options);
 //odbieranie z wątku
-child_js.on('message',function(message){
-	console.log(message);
+child_js.on('message',(message)=>{
+	console.log("Wątek node: "+message);
 });
 //wysyłanie do wątku
 //child_js.send({cld:command}); 
@@ -61,31 +39,15 @@ app.set('views', __dirname + '/nodeweb/views');
 app.set('view engine', 'ejs');
 		
 app.use(express.static(__dirname+'/nodeweb/'))
-//app.use(express.json());
-//app.use(express.urlencoded());
-//app.use(express.methodOverride());
-//app.use(app.router);
-
-// Use application-level middleware for common functionality, including
-// logging, parsing, and session handling.
-//app.use(require('morgan')('combined'));
-app.use(cookieParser('magicString'));
-app.use(session({
-  secret: 'tajne-poufne',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { secure: false }
-}))
-
-
-var server=http.listen(8080, function(){
+app.set('port',process.env.PORT || 8080)
+var server=http.listen(app.get('port'), ()=>{
   console.log('nasuchuję na porcie:',server.address().port);
 });
 function Shutdown(){
 	console.log("wysłano kill signal.");
 	app_exe.AppExe.KillApp();
 	child_js.kill();
-	server.close(function() {
+	server.close(()=> {
 		console.log("Closed out remaining connections.");
 	});
 	process.exit();
@@ -94,17 +56,17 @@ function Shutdown(){
 try {
 var routes = require('./routes')(app); 
 
-io.on('connection', function(socket){
+io.on('connection', (socket)=>{
 	;//console.log('user connected:'+socket);
 	
-	socket.on('disconnect', function(){
+	socket.on('disconnect', ()=>{
 		;//console.log('user disconnected');
 	});
-	socket.on('error', function(reason){
+	socket.on('error', (reason)=>{
 		console.log('socket error: '+reason);
 	});
   
-	socket.on('gettemperature', function(msg){
+	socket.on('gettemperature', (msg)=>{
 		//console.log('gettemperature: '+msg);
 		t1=wire.Termometr.GetTempe1();
 		t2=wire.Termometr.GetTempe2();
@@ -113,7 +75,7 @@ io.on('connection', function(socket){
 		//console.log('temparatury: T1: '+t1+'°C T2:'+t1+'°C')
 	});
 	
-	socket.on('restart', function(msg){
+	socket.on('restart', (msg)=>{
 		console.log('restart: '+msg);
 		var tab= msg.split(";")
 		//dopisz resetowanie systemu i atmegi
@@ -121,7 +83,7 @@ io.on('connection', function(socket){
 		io.emit('restart','restart');
 	});
 	
-	socket.on('silniki', function(msg){
+	socket.on('silniki', (msg)=>{
 		//console.log('silniki: '+msg);
 		sterowanie_silnikami= msg.split(";")
 		//var dane = new Uint8Array(4);
@@ -130,14 +92,14 @@ io.on('connection', function(socket){
 		io.emit('silniki',sterowanie_silnikami);
 	});
 	
-	socket.on('os_info', function(msg){
+	socket.on('os_info', (msg)=>{
 		//console.log('silniki: '+msg);
 		var tab=os.uptime()+";"+os.loadavg()+";"+os.freemem();//JSON.stringify(os.cpus())
 		tab+=";"+atmega.atmega.GetInfo().info;
 		io.emit('os_info',tab);
 	});
 	
-	socket.on('getprady', function(msg){
+	socket.on('getprady', (msg)=>{
 		//console.log('getprady: '+msg);
 		var info=atmega.atmega.GetInfo();
 		var dane=info.pradlewy.toFixed(3)+";"+info.pradprawy.toFixed(3)+";"+info.napiecie.toFixed(3)+";"+info.pradserw.toFixed(3);
@@ -145,7 +107,7 @@ io.on('connection', function(socket){
 		io.emit('napiecie_i_prady',dane);
 	});
 	
-	socket.on('setAlarm', function(msg){
+	socket.on('setAlarm', (msg)=>{
 		var tab= msg.split(";")
 		prog_pradu_silniki=tab[0];
 		if(prog_pradu_silniki>255)prog_pradu_silniki=255;
@@ -157,15 +119,17 @@ io.on('connection', function(socket){
 		data1[3]=opoznienie_alar_prad&0xFF;
 		data1[4]=(opoznienie_alar_prad>>8)&0xFF;
 		//console.log("prog:"+tab[0] +" opoz:"+tab[1] +" "+data1[3]+" "+data1[4]);
-		atmega.atmega.Write(data1);
+		process.nextTick(function() {
+			atmega.atmega.Write(data1);
+		});
 		
 		io.emit('setAlarm',tab);
 	});
-	socket.on('nagrywac_exe', function(msg){
+	socket.on('nagrywac_exe', (msg)=>{
 			info_exe[0]=msg;
 	});
 	
-	socket.on('Init', function(msg){
+	socket.on('Init', (msg)=>{
 		var ss=serwa.serwa.GetInfo();
 		var tab=ss.barkLP+";"+
 				ss.barkGD+";"+
@@ -177,38 +141,27 @@ io.on('connection', function(socket){
 				info_exe[0]+";"+info_exe[1]+";"+info_exe[2]+";"+info_exe[3]+";"+info_exe[4];
 		io.emit('Init',tab);
 	});
-
 	
-	socket.on('serwa', function(msg){
+	socket.on('serwa', (msg)=>{
 		//console.log('serwa: '+msg);
 		serwa.serwa.Write(msg);
 		io.emit('serwa',msg);
 	});
 	
-	socket.on('wykryto_ruch', function(msg){
+	socket.on('wykryto_ruch', (msg)=>{
 		io.emit('wykryto_ruch',wykryto_ruch);
 	});
 	
 });
-
-fs.watch("/home/pi/robot/nodeweb/fotki/", (eventType, filename) => {
-   //console.log(filename+" "+eventType);
-   if (filename && eventType=='rename'){
- 	 var tab= filename.split(".");
-	 if(tab[1]=="jpg"){
-		wykryto_ruch++;
-		
-	}//czy jpg
-  }	
- });
  
  //pętla główna wywoływana co 100ms
  function Update() {
-	 atmega.atmega.UpdateInfo();
-	
-	//aktualizacja sterowania silnikami 
-	//jak przez 1s  nie zaktualizujemy silników to atmega wyłączy silniki
-	atmega.atmega.Write(sterowanie_silnikami);
+	 process.nextTick(function() {
+		 atmega.atmega.UpdateInfo();
+		//aktualizacja sterowania silnikami 
+		//jak przez 1s  nie zaktualizujemy silników to atmega wyłączy silniki
+		atmega.atmega.Write(sterowanie_silnikami);
+	 });
 	//pytamy program exe po gniazdach co tam u niego i wydajemy rozkazy
 	//trzeba wywoływać parę razy na sekundę inaczej zatrzyma się wykrywanie
 	var buf= new Uint8Array(5); 
@@ -225,9 +178,13 @@ fs.watch("/home/pi/robot/nodeweb/fotki/", (eventType, filename) => {
 		buf[0]=2;//gdy chodzą silniki albo serwa wyłącz wykrywanie ruchu
 		}
 	}
-	app_exe.AppExe.WyslijAll(buf);
+	process.nextTick(function() {
+		app_exe.AppExe.WyslijAll(buf);
+		wykryto_ruch = app_exe.AppExe.GetWykrytoRuch();
+		//console.log(wykryto_ruch);
+	});
  }
- setInterval(Update,100);
+ setInterval(Update,200);
  
 // listen for TERM signal .e.g. kill 
 process.on ('SIGTERM', Shutdown);

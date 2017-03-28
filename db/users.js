@@ -1,6 +1,12 @@
+var crypto = require('crypto')
+
+exports.hashPW = function(pwd){
+	return crypto.createHash('sha256').update(pwd).digest('base64').toString();
+}
+
 var records = [
-    { id: 1, username: 'tomtom', password: 'gadula123', displayName: 'majtek', emails: [ { value: 'tomtom@example.com' } ] }
-  , { id: 2, username: 'majtek', password: 'gadula', displayName: 'majtek', emails: [ { value: 'majtek@example.com' } ] }
+    { id: 1, name: 'tomtom', password: exports.hashPW('gadula123'), displayName: 'TomTom', emails: [ { value: 'tomtom@example.com' } ] }
+  , { id: 2, name: 'test', password: exports.hashPW('test'), displayName: 'test', emails: [ { value: 'majtek@example.com' } ] }
 ];
 
 exports.findById = function(id, cb) {
@@ -18,7 +24,7 @@ exports.findByUsername = function(username, cb) {
   process.nextTick(function() {
     for (var i = 0, len = records.length; i < len; i++) {
       var record = records[i];
-      if (record.username === username) {
+      if (record.name === username) {
         return cb(null, record);
       }
     }

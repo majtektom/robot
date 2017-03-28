@@ -1,17 +1,17 @@
-<%- include('header', {user: user}) %>
+<%- include('header') %>
 <div class="col-sm-12 col-md-4">
 	<div class="thumbnail text-center green-thumb">
 		<div class="caption green-caption">
 			<p>
-			ID: <%= user.id %><br/>
-			Username: <%= user.name %><br/>
-			Name: <%= user.displayName %><br/>
-			<% if (user.emails) { %>
-			Email: <%= user.emails[0].value %><br/>
+			ID: <%= session.user.id %><br/>
+			Username: <%= session.user.name %><br/>
+			Name: <%= session.user.displayName %><br/>
+			<% if (session.user.emails) { %>
+			Email: <%= session.user.emails[0].value %><br/>
 			<% } %>
 			</p>
 			<a href="/logout">Log out</a>
 		</div>
 	</div>
 </div>
-<%- include('stopka', {user: user}) %>
+<%- include('stopka') %>

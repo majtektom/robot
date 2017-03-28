@@ -8,10 +8,10 @@ socket1.on('restart', function(msg){
 		$('#ping').text(msg);
 	}); 
 socket1.on('temperatura1', function(msg){
-		$('#pTemp1').text("Wewnątrz: "+ msg + "°C");
+		$('#pTemp1').text("Chwytak ramienia: "+ msg + "°C");
 	});
 socket1.on('temperatura2', function(msg){
-		$("#pTemp2").text("Zewnątrz: "+ msg + "°C");
+		$("#pTemp2").text("Wewnątrz: "+ msg + "°C");
 		var d = new Date();
 		time2 = d.getTime();
 		$("#ping").text("Ping "+(time2-time1)+"ms");
@@ -69,11 +69,12 @@ socket1.on('serwa', function(msg){
 		}
 		
 	});
-socket1.on('komunikacja', function(msg){
+socket1.on('komunikacja_exe', function(msg){
 		$("#komunikacja").text("Z analizy obrazu: "+msg.toString());
 });
 socket1.on('Init', function(msg){
 		var tab= msg.split(";");
+		//$("#komunikacja").text(msg);
 		$('#barkLP').val(tab[0]/4);
 		$('#barkGD').val(tab[1]/4); 
 		$('#lokiec').val(tab[2]/4); 
@@ -177,7 +178,6 @@ $(function(){
 		var data= new Int16Array(2);
 		data[0]=0x20;	data[1]=0;;
 		var tt=data.join(";");
-		//webiopi().callMacro("restart",tt,updatePing);
 		socket1.emit('restart', tt); 
 	});
 	

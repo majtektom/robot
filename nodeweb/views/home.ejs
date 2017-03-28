@@ -1,7 +1,7 @@
 <%- include('header') %>
 
 
-<% if (!user) { %>
+<% if (!session.user) { %>
 <!-- KAFEL logowanie==================================== -->
 <div class="col-sm-12 col-md-4">
 	<div class="thumbnail text-center green-thumb">
@@ -19,6 +19,9 @@
 				<input type="submit" class="btn btn-success" value="Loguj"/>
 				</div>
 			</form>
+			 <% if (session.error) { %>
+			 <label> <%= session.error %> </label>
+			 <% } %>
 		</div>
 	</div>
 </div>
@@ -30,6 +33,7 @@
 	<div class="thumbnail text-center green-thumb">
 		<div class="caption green-caption">
 			<h3>Ramie robota</h3>
+			<canvas id="canvas" style="border: none;" width="340" height="200"></canvas>
 			<p>Bark lewo/prawo. </p>
 			<div class="form-group">
 				<input class="thumb-slider" id="barkLP" type="range" name="barkLP" min="600" max="2400"> 
@@ -95,6 +99,7 @@
 <div class="col-sm-12 col-md-4">
 	<div class="thumbnail text-center green-thumb">
 		<div class="caption green-caption" id="jazda">
+			<p>Jazda</p>
 			<div class="device">
 			<div class="device-button"></div>
 			<div class="device-screen-wrapper">
@@ -115,7 +120,7 @@
 		<div class="caption green-caption">
 			<h3>Temperatury</h3>
 			<div class="form-group">
-				<p id="pTemp1">Wewnątrz:</p><p id="pTemp2"Zewnątrz:></p> 
+				<p id="pTemp1">Chwytak ramienia:</p><p id="pTemp2">Wewnątrz:</p> 
 			</div>
 			<h3>Napięcie zasilania</h3>
 			<div class="form-group">
@@ -147,13 +152,15 @@
 </div>
 <% } %>
 
-<% if (user) { %>
+<% if (session.user) { %>
 <script type="text/javascript" src="/js/dotyk.js"></script>
 <script type="text/javascript" src="/js/kamera.js"></script>
-
+<script type="text/javascript" src="js/gl-matrix-min.js"></script>
+<script type="text/javascript" src="js/webgl-utils.js"></script>
+<script type="text/javascript" src="js/webgl.js"></script>
 
 <% } %>
-<%- include('stopka', {user: user}) %>
+<%- include('stopka') %>
 
 
 

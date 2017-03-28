@@ -2,7 +2,7 @@ var SerialPort = require("serialport");
 
 function Serwa_info()
 {
-	this.barkLPd=1740*4
+	this.barkLP=1740*4
 	this.barkGD=850*4;
 	this.lokiec=950*4;
 	this.nadgarstek=1680*4;
@@ -18,14 +18,14 @@ function CSerwa(){
 	
 	var serwa_info =new Serwa_info();	
 	
-	this.GetInfo = function () {
+	this.GetInfo =  () =>{
 		return serwa_info
 	}
-	this.IsEnable = function () {
+	this.IsEnable =  () =>{
 		return serwa_info.StopSerwa
 	}
 	//uart
-	port.on('open', function() {
+	port.on('open', ()=> {
 	  // port.write("test", function(err) {
 	   console.log("open uart\n");
 
@@ -49,19 +49,19 @@ function CSerwa(){
 		port.write(data1);
 	});
 
-	port.on('error', function(err) {
+	port.on('error', (err) =>{
 	  console.log('Error uart: ', err.message);
 	})
 
-	port.on('data', function(data) {
+	port.on('data', (data) =>{
 	  //console.log(' data uart: ', data);
 	})
 	
-	this.Write = function (data) {
+	this.Write =  (data) =>{
 		var tab= data.split(";")
 		var data= new Uint8Array(13);
 		if(tab[3]!=0 & tab[4]!=0 & tab[5]!=0 & tab[6]!=0 & tab[7]!=0 ){
-			serwa_info.barkLPd=	tab[3];
+			serwa_info.barkLP=		tab[3];
 			serwa_info.barkGD=		tab[4];
 			serwa_info.lokiec=		tab[5];
 			serwa_info.nadgarstek=	tab[6];

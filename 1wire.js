@@ -26,7 +26,6 @@ function CTermometr() {
 	this.GetTempe1 = function() {
 		 return _this.temperatura1;
 	}
-
 }
 
 CTermometr.prototype.GetTempe2 = function () {
@@ -34,7 +33,6 @@ CTermometr.prototype.GetTempe2 = function () {
 }
 
 //var zmienna ="ala ma kota";
-
 //exports.zmienna = zmienna
 module.exports ={
 	Termometr: new CTermometr//,
