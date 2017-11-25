@@ -1,3 +1,55 @@
+# Diagnostyka użycia dysku i modyfikacj pilków
+
+uruchomienie
+------------
+* W konsoli  - wyniki wyświetlają się w konsoli i zapisywane do plku jak jest zdefiniowany
+```
+  node ./server.js
+```
+* W tle (działa po zamknięciu konsoli) -  nie wyswietlają się w konsoli trzeba mieć zdefiniowany plik do zapisywanie wyników
+```
+   ./start_w_tle.sh
+```
+
+Ustawienia
+-----------
+Ustawienia robimy w pliku ./sciechy
+każda ściezka w nowej lini musi być
+jak dodamy na koćcu sceiżki #+ to dodaje też podkatalogi do monitoringu
+np. 
+```
+/tmp /nmi#+
+'''
+monitorujemy katalog /tmp 
+i monitorujemy katalog /nmi razem z wszystkimi podkatalogami
+
+Można także ustalić plik gdzie zapisywać wyniki pomiarów, robimy to przez dodanie na początku napisu save 
+np.
+```
+save ./log.html
+'''
+sapisuje wyniki do pliku log.html w katalogu gdzie znajduje się skrypt
+
+
+Wyniki monitoringu
+------------------
+Widzimy je na konsoli lub możemy odczytać z pliku jak mamy zdefiniowaną sceiżkę do zapisu w pliku sciechy 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # robot
 raspberry pi, node, robotic, atmega
 
