@@ -19,7 +19,7 @@ jak dodamy na koćcu sceiżki #+ to dodaje też podkatalogi do monitoringu
 np. 
 ```
 /tmp /nmi#+
-'''
+```
 monitorujemy katalog /tmp 
 i monitorujemy katalog /nmi razem z wszystkimi podkatalogami
 
@@ -27,8 +27,8 @@ Można także ustalić plik gdzie zapisywać wyniki pomiarów, robimy to przez d
 np.
 ```
 save ./log.html
-'''
-sapisuje wyniki do pliku log.html w katalogu gdzie znajduje się skrypt
+```
+zapisuje wyniki do pliku log.html w katalogu gdzie znajduje się skrypt
 
 
 Wyniki monitoringu
