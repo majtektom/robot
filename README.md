@@ -13,17 +13,17 @@ uruchomienie
 
 Ustawienia
 -----------
-Ustawienia robimy w pliku ./sciechy
-każda ściezka w nowej lini musi być
-jak dodamy na koćcu sceiżki #+ to dodaje też podkatalogi do monitoringu
+Ustawienia robimy w pliku ./sciechy \n
+każda ściezka w nowej lini musi być \n
+jak dodamy na koćcu sceiżki #+ to dodaje też podkatalogi do monitoringu\n
 np. 
 ```
 /tmp /nmi#+
 ```
-monitorujemy katalog /tmp 
-i monitorujemy katalog /nmi razem z wszystkimi podkatalogami
+monitorujemy katalog /tmp \n
+i monitorujemy katalog /nmi razem z wszystkimi podkatalogami\n
 
-Można także ustalić plik gdzie zapisywać wyniki pomiarów, robimy to przez dodanie na początku napisu save 
+Można także ustalić plik gdzie zapisywać wyniki pomiarów, robimy to przez dodanie na początku napisu save \n
 np.
 ```
 save ./log.html
